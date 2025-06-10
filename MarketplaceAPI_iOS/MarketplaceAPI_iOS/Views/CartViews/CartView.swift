@@ -2,49 +2,179 @@ import SwiftUI
 
 struct CartView: View {
     @Binding var cartItems: [ProductItem]
+    @State private var showingClearAllAlert = false
     
     var totalPrice: Double {
         cartItems.reduce(0) { $0 + $1.totalPrice }
     }
     
+    var totalQuantity: Int {
+        cartItems.reduce(0) { $0 + $1.quantity }
+    }
+    
     var body: some View {
-        VStack {
+        VStack(spacing: 0) {
             if cartItems.isEmpty {
-                VStack(spacing: 20) {
-                    Image(systemName: "cart.fill")
-                        .font(.system(size: 80))
-                        .foregroundColor(.gray)
-                    Text("The cart is empty.")
-                        .font(.title2)
-                        .foregroundColor(.secondary)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                emptyCartView
             } else {
+                cartHeaderView
+                
                 List {
                     ForEach(cartItems) { item in
                         CartItemView(item: item, cartItems: $cartItems)
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                     }
                     .onDelete(perform: removeItems)
                 }
+                .listStyle(PlainListStyle())
                 
-                VStack(spacing: 16) {
+                cartFooterView
+            }
+        }
+        .navigationTitle("Cart")
+        .toolbar {
+            if !cartItems.isEmpty {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Clear All") {
+                        showingClearAllAlert = true
+                    }
+                    .foregroundColor(.red)
+                }
+            }
+        }
+        .alert("Clear cart", isPresented: $showingClearAllAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Clear all", role: .destructive) {
+                cartItems.removeAll()
+            }
+        } message: {
+            Text("Are you sure you want to remove all items from your cart?")
+        }
+    }
+    
+    private var emptyCartView: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "cart.fill")
+                .font(.system(size: 80))
+                .foregroundColor(.gray)
+            
+            Text("Your cart is empty")
+                .font(.title2)
+                .fontWeight(.semibold)
+                .foregroundColor(.primary)
+            
+            Text("Add some products to get started.")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+    
+    private var cartHeaderView: some View {
+        VStack(spacing: 12) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Cart summary")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                    
+                    Text("\(totalQuantity) item\(totalQuantity == 1 ? "" : "s")")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+                
+                Text("\(Int(totalPrice)) ₴")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundColor(.accentColor)
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 16)
+            
+            Divider()
+        }
+        .background(Color(.systemBackground))
+    }
+    
+    private var cartFooterView: some View {
+        VStack(spacing: 16) {
+            Divider()
+            
+            VStack(spacing: 12) {
+                VStack(spacing: 8) {
                     HStack {
-                        Text("Total price: ")
-                            .font(.headline)
+                        Text("Subtotal (\(totalQuantity) item\(totalQuantity == 1 ? "" : "s"))")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
                         Spacer()
                         Text("\(Int(totalPrice)) ₴")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                    }
+                    
+                    HStack {
+                        Text("Shipping")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        Text(totalPrice >= 1000 ? "Free" : "₴99")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundColor(totalPrice >= 1000 ? .green : .primary)
+                    }
+                    
+                    Divider()
+                    
+                    HStack {
+                        Text("Total")
+                            .font(.headline)
+                            .fontWeight(.bold)
+                        Spacer()
+                        Text("\(Int(totalPrice + (totalPrice >= 1000 ? 0 : 99))) ₴")
                             .font(.title2)
                             .fontWeight(.bold)
                             .foregroundColor(.accentColor)
                     }
-                    .padding(.horizontal)
-                    
-                    // add checkout view implementation
                 }
-                .padding(.bottom)
+                
+                if totalPrice < 1000 {
+                    HStack {
+                        Image(systemName: "truck.box")
+                            .foregroundColor(.accentColor)
+                        Text("Add \(Int(1000 - totalPrice)) ₴ more for free shipping")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color.accentColor.opacity(0.1))
+                    .cornerRadius(8)
+                }
+                
+                Button(action: {
+                    print("Proceeding to checkout with \(cartItems.count) items")
+                }) {
+                    HStack {
+                        Image(systemName: "creditcard.fill")
+                        Text("Proceed to checkout")
+                    }
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .padding(.vertical, 16)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.accentColor)
+                    .cornerRadius(12)
+                }
+                .buttonStyle(PlainButtonStyle())
             }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 16)
         }
-        .navigationTitle("Cart")
+        .background(Color(.systemBackground))
     }
     
     private func removeItems(at offsets: IndexSet) {
