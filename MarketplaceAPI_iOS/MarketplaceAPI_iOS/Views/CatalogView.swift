@@ -3,15 +3,55 @@ import SwiftUI
 struct CatalogView: View {
     @Binding var productItems: [ProductItem]
     @Binding var showingCategories: Bool
+    @Binding var productFilter: ProductFilter
     @State private var searchText = ""
     @State private var products = Product.sampleProducts
     
     var filteredProducts: [Product] {
-        if searchText.isEmpty {
-            return products
-        } else {
-            return products.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+        var filtered = products
+        
+        if !searchText.isEmpty {
+            filtered = filtered.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
         }
+        
+        if !productFilter.selectedCategories.isEmpty && !productFilter.selectedCategories.contains("All") {
+            filtered = filtered.filter { productFilter.selectedCategories.contains($0.category) }
+        }
+        
+        if !productFilter.selectedBrands.isEmpty {
+            filtered = filtered.filter { productFilter.selectedBrands.contains($0.brand) }
+        }
+        
+        if !productFilter.selectedColors.isEmpty {
+            filtered = filtered.filter { productFilter.selectedColors.contains($0.color) }
+        }
+        
+        filtered = filtered.filter {
+            $0.price >= productFilter.priceRange.lowerBound &&
+            $0.price <= productFilter.priceRange.upperBound
+        }
+        
+        switch productFilter.availabilityFilter {
+        case .inStock:
+            filtered = filtered.filter { $0.availability == .inStock }
+        case .outOfStock:
+            filtered = filtered.filter { $0.availability == .outOfStock }
+        case .all:
+            break
+        }
+        
+        switch productFilter.sortBy {
+        case .name:
+            filtered = filtered.sorted { $0.name < $1.name }
+        case .priceAsc:
+            filtered = filtered.sorted { $0.price < $1.price }
+        case .priceDesc:
+            filtered = filtered.sorted { $0.price > $1.price }
+        case .rating:
+            filtered = filtered.sorted { $0.rating > $1.rating }
+        }
+        
+        return filtered
     }
     
     var body: some View {
@@ -79,39 +119,35 @@ struct CatalogView: View {
             }
             
             if showingCategories {
-                HStack {
-                    ZStack {
-                        Rectangle()
-                            .fill(Color(.systemGray6))
-                            .frame(width: 280)
-                            .shadow(color: .black.opacity(0.15), radius: 8, x: 2, y: 0)
-                        
-                        VStack {
-                            CategoriesSliderView(showingCategories: $showingCategories)
-                        }
-                        .frame(width: 280)
-                        .frame(maxHeight: .infinity)
+                HStack(spacing: 0) {
+                    VStack(spacing: 0) {
+                        CategoriesSliderView(showingCategories: $showingCategories, productFilter: $productFilter)
                     }
+                    .frame(width: 320)
                     .frame(maxHeight: .infinity)
+                    .background(Color(.systemBackground))
+                    .shadow(color: .black.opacity(0.15), radius: 8, x: 2, y: 0)
                     .ignoresSafeArea(.all)
-                    .offset(x: showingCategories ? 0 : -280)
+                    .offset(x: showingCategories ? 0 : -320) // Updated offset to match new width
                     .animation(.spring(response: 0.5, dampingFraction: 0.8, blendDuration: 0), value: showingCategories)
                     
-                    Spacer()
-                }
-                .background(
-                    Color.black.opacity(showingCategories ? 0.3 : 0)
-                        .ignoresSafeArea()
+                    Color.black.opacity(0.3)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .contentShape(Rectangle())
                         .onTapGesture {
                             withAnimation(.spring(response: 0.4, dampingFraction: 0.8, blendDuration: 0)) {
                                 showingCategories = false
                             }
                         }
-                        .animation(.easeInOut(duration: 0.3), value: showingCategories)
-                )
+                        .ignoresSafeArea(.all)
+                        .clipped()
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .ignoresSafeArea(.all)
+                .zIndex(1000)
             }
         }
         .navigationBarHidden(true)
+        .toolbar(showingCategories ? .hidden : .visible, for: .tabBar)
     }
 }
