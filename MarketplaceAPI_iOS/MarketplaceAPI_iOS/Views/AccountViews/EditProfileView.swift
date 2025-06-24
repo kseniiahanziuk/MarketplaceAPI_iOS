@@ -35,6 +35,14 @@ struct EditProfileView: View {
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") {
+                        let profileChanged = (userName != tempName) || (userEmail != tempEmail)
+                        
+                        if profileChanged {
+                            AnalyticsManager.shared.logCustomEvent("profile_updated", parameters: [
+                                "name_changed": userName != tempName,
+                                "email_changed": userEmail != tempEmail
+                            ])
+                        }
                         userName = tempName
                         userEmail = tempEmail
                         dismiss()

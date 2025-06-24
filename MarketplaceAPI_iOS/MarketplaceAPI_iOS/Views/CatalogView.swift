@@ -2,10 +2,12 @@ import SwiftUI
 
 struct CatalogView: View {
     @Binding var productItems: [ProductItem]
+    @Binding var likedProducts: [Product]
     @Binding var showingCategories: Bool
     @Binding var productFilter: ProductFilter
     @State private var searchText = ""
     @State private var products = Product.sampleProducts
+    @FocusState private var isSearchFocused: Bool
     
     var filteredProducts: [Product] {
         var filtered = products
@@ -69,7 +71,16 @@ struct CatalogView: View {
                                 .font(.title2)
                         }
                         
-                        SearchBarView(text: $searchText)
+                        SearchBarView(text: $searchText, isSearchFocused: $isSearchFocused)
+                            .onChange(of: searchText) { oldValue, newValue in
+                                if !newValue.isEmpty && newValue.count >= 3 {
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                        if searchText == newValue {
+                                            AnalyticsManager.shared.logSearch(newValue, resultCount: filteredProducts.count)
+                                        }
+                                    }
+                                }
+                            }
                         
                         NavigationLink(destination: CartView(cartItems: $productItems)) {
                             ZStack {
@@ -79,10 +90,12 @@ struct CatalogView: View {
                                 if !productItems.isEmpty {
                                     Text("\(productItems.count)")
                                         .font(.caption2)
+                                        .fontWeight(.semibold)
                                         .foregroundColor(.white)
+                                        .frame(minWidth: 18, minHeight: 18)
                                         .background(.red)
                                         .clipShape(Circle())
-                                        .offset(x: 10, y: -10)
+                                        .offset(x: 11, y: -11)
                                 }
                             }
                         }
@@ -102,15 +115,23 @@ struct CatalogView: View {
                         GridItem(.flexible(), spacing: 8),
                         GridItem(.flexible(), spacing: 8)
                     ], spacing: 16) {
-                        ForEach(filteredProducts) { product in
-                            NavigationLink(destination: ProductDetailView(product: product, cartItems: $productItems)) {
+                        ForEach(Array(filteredProducts.enumerated()), id: \.element.id) { index, product in
+                            NavigationLink(destination: ProductDetailView(product: product, cartItems: $productItems, likedProducts: $likedProducts)) {
                                 ProductCardView(product: product)
                             }
                             .buttonStyle(PlainButtonStyle())
+                            .simultaneousGesture(TapGesture().onEnded {
+                                AnalyticsManager.shared.logProductCardTapped(product, position: index)
+                            })
                         }
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 16)
+                }
+                .onTapGesture {
+                    if isSearchFocused {
+                        isSearchFocused = false
+                    }
                 }
                 
                 Rectangle()
@@ -128,7 +149,7 @@ struct CatalogView: View {
                     .background(Color(.systemBackground))
                     .shadow(color: .black.opacity(0.15), radius: 8, x: 2, y: 0)
                     .ignoresSafeArea(.all)
-                    .offset(x: showingCategories ? 0 : -320) // Updated offset to match new width
+                    .offset(x: showingCategories ? 0 : -320)
                     .animation(.spring(response: 0.5, dampingFraction: 0.8, blendDuration: 0), value: showingCategories)
                     
                     Color.black.opacity(0.3)

@@ -6,6 +6,14 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		04722CCB2E008C2200C90D16 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 04722CCA2E008C2200C90D16 /* FirebaseAnalytics */; };
+		04722CCD2E008C2200C90D16 /* FirebaseAnalyticsCore in Frameworks */ = {isa = PBXBuildFile; productRef = 04722CCC2E008C2200C90D16 /* FirebaseAnalyticsCore */; };
+		04722CCF2E008C2200C90D16 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 04722CCE2E008C2200C90D16 /* FirebaseCore */; };
+		04722CD12E008C2200C90D16 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 04722CD02E008C2200C90D16 /* FirebaseCrashlytics */; };
+		04722ED32E0A2CF100C90D16 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 04722ED22E0A2CF100C90D16 /* Localizable.xcstrings */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		04B434DD2DE4761100218A2F /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -24,6 +32,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		04722ED22E0A2CF100C90D16 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		04B434CC2DE4761000218A2F /* MarketplaceAPI_iOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MarketplaceAPI_iOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		04B434DC2DE4761100218A2F /* MarketplaceAPI_iOSTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MarketplaceAPI_iOSTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		04B434E62DE4761100218A2F /* MarketplaceAPI_iOSUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MarketplaceAPI_iOSUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -52,6 +61,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				04722CCB2E008C2200C90D16 /* FirebaseAnalytics in Frameworks */,
+				04722CD12E008C2200C90D16 /* FirebaseCrashlytics in Frameworks */,
+				04722CCF2E008C2200C90D16 /* FirebaseCore in Frameworks */,
+				04722CCD2E008C2200C90D16 /* FirebaseAnalyticsCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -75,6 +88,7 @@
 		04B434C32DE4761000218A2F = {
 			isa = PBXGroup;
 			children = (
+				04722ED22E0A2CF100C90D16 /* Localizable.xcstrings */,
 				04B434CE2DE4761000218A2F /* MarketplaceAPI_iOS */,
 				04B434DF2DE4761100218A2F /* MarketplaceAPI_iOSTests */,
 				04B434E92DE4761100218A2F /* MarketplaceAPI_iOSUITests */,
@@ -112,6 +126,10 @@
 			);
 			name = MarketplaceAPI_iOS;
 			packageProductDependencies = (
+				04722CCA2E008C2200C90D16 /* FirebaseAnalytics */,
+				04722CCC2E008C2200C90D16 /* FirebaseAnalyticsCore */,
+				04722CCE2E008C2200C90D16 /* FirebaseCore */,
+				04722CD02E008C2200C90D16 /* FirebaseCrashlytics */,
 			);
 			productName = MarketplaceAPI_iOS;
 			productReference = 04B434CC2DE4761000218A2F /* MarketplaceAPI_iOS.app */;
@@ -191,10 +209,14 @@
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
+				uk,
 				Base,
 			);
 			mainGroup = 04B434C32DE4761000218A2F;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				04722CC92E008C2200C90D16 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 04B434CD2DE4761000218A2F /* Products */;
 			projectDirPath = "";
@@ -212,6 +234,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				04722ED32E0A2CF100C90D16 /* Localizable.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -326,8 +349,10 @@
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				"OTHER_SWIFT_FLAGS[arch=*]" = "-DFirebaseAutomaticScreenReportingEnabled=false";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
@@ -382,8 +407,10 @@
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				"OTHER_SWIFT_FLAGS[arch=*]" = "-DFirebaseAutomaticScreenReportingEnabled=false";
 				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
@@ -558,6 +585,40 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		04722CC92E008C2200C90D16 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 11.14.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		04722CCA2E008C2200C90D16 /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 04722CC92E008C2200C90D16 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+		04722CCC2E008C2200C90D16 /* FirebaseAnalyticsCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 04722CC92E008C2200C90D16 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalyticsCore;
+		};
+		04722CCE2E008C2200C90D16 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 04722CC92E008C2200C90D16 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		04722CD02E008C2200C90D16 /* FirebaseCrashlytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 04722CC92E008C2200C90D16 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCrashlytics;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 04B434C42DE4761000218A2F /* Project object */;
 }

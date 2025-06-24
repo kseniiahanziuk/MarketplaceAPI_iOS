@@ -92,7 +92,7 @@ struct CategoriesSliderView: View {
     }
     
     private var priceRangeSection: some View {
-        FilterSection(title: "Price range", icon: "dollarsign.circle") {
+        FilterSection(title: String(localized: "Price range"), icon: "dollarsign.circle") {
             RangeSlider(
                 range: $tempFilter.priceRange,
                 bounds: 0...100000,
@@ -303,6 +303,14 @@ struct CategoriesSliderView: View {
     }
     
     private func applyFilters() {
+        AnalyticsManager.shared.logFilterApplied(
+            categories: tempFilter.selectedCategories,
+            brands: tempFilter.selectedBrands,
+            priceRange: tempFilter.priceRange
+        )
+        
+        AnalyticsManager.shared.logSortApplied(tempFilter.sortBy)
+        
         productFilter = tempFilter
         withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
             showingCategories = false

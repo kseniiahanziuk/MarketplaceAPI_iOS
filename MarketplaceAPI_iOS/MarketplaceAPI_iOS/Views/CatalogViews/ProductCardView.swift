@@ -27,7 +27,7 @@ struct ProductCardView: View {
                     Circle()
                         .fill(product.isAvailable ? Color.green : Color.red)
                         .frame(width: 6, height: 6)
-                    Text(product.availability.displayName)
+                    Text(product.availability == .inStock ? "Available" : "Not available")
                         .font(.caption2)
                         .foregroundColor(product.isAvailable ? .green : .red)
                     Spacer()

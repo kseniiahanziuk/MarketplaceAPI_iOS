@@ -36,7 +36,7 @@ struct CartView: View {
         .toolbar {
             if !cartItems.isEmpty {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Clear All") {
+                    Button("Clear all") {
                         showingClearAllAlert = true
                     }
                     .foregroundColor(.red)
@@ -106,16 +106,6 @@ struct CartView: View {
             VStack(spacing: 12) {
                 VStack(spacing: 8) {
                     HStack {
-                        Text("Subtotal (\(totalQuantity) item\(totalQuantity == 1 ? "" : "s"))")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                        Spacer()
-                        Text("\(Int(totalPrice)) ₴")
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                    }
-                    
-                    HStack {
                         Text("Shipping")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
@@ -157,6 +147,15 @@ struct CartView: View {
                 
                 Button(action: {
                     print("Proceeding to checkout with \(cartItems.count) items")
+                    
+                    AnalyticsManager.shared.logPurchase(
+                        items: cartItems,
+                        totalValue: totalPrice + (totalPrice >= 1000 ? 0 : 99)
+                    )
+                    
+                    cartItems.removeAll()
+                    
+                    print("Purchase completed!")
                 }) {
                     HStack {
                         Image(systemName: "creditcard.fill")
