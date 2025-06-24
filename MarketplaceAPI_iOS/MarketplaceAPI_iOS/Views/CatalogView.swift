@@ -9,6 +9,10 @@ struct CatalogView: View {
     @State private var products = Product.sampleProducts
     @FocusState private var isSearchFocused: Bool
     
+    var totalCartQuantity: Int {
+        productItems.reduce(0) { $0 + $1.quantity }
+    }
+    
     var filteredProducts: [Product] {
         var filtered = products
         
@@ -87,8 +91,8 @@ struct CatalogView: View {
                                 Image(systemName: "cart.fill")
                                     .foregroundColor(.accentColor)
                                 
-                                if !productItems.isEmpty {
-                                    Text("\(productItems.count)")
+                                if totalCartQuantity > 0 {
+                                    Text("\(totalCartQuantity)")
                                         .font(.caption2)
                                         .fontWeight(.semibold)
                                         .foregroundColor(.white)

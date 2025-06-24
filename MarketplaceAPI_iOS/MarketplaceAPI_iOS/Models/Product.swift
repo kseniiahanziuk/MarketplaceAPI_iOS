@@ -101,8 +101,8 @@ enum ProductAvailability: String, Codable, CaseIterable {
     
     var displayName: String {
         switch self {
-        case .inStock: return "Available"
-        case .outOfStock: return "Not available"
+        case .inStock: return String(localized: "Available")
+        case .outOfStock: return String(localized: "Not available")
         }
     }
     

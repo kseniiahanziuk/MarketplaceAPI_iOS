@@ -46,6 +46,8 @@ struct ContentView: View {
         .onChange(of: chosenTab) { oldValue, newValue in
             let screenName = getScreenName(for: newValue)
             AnalyticsManager.shared.logScreenView(screenName)
+            // simple crashlytics test for fatal error
+            // CrashlyticsManager.shared.testCrash()
         }
     }
     

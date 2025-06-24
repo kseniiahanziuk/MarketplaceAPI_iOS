@@ -17,8 +17,6 @@ struct CartView: View {
             if cartItems.isEmpty {
                 emptyCartView
             } else {
-                cartHeaderView
-                
                 List {
                     ForEach(cartItems) { item in
                         CartItemView(item: item, cartItems: $cartItems)
@@ -71,34 +69,6 @@ struct CartView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
     
-    private var cartHeaderView: some View {
-        VStack(spacing: 12) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Cart summary")
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                    
-                    Text("\(totalQuantity) item\(totalQuantity == 1 ? "" : "s")")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
-                
-                Spacer()
-                
-                Text("\(Int(totalPrice)) ₴")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundColor(.accentColor)
-            }
-            .padding(.horizontal, 16)
-            .padding(.top, 16)
-            
-            Divider()
-        }
-        .background(Color(.systemBackground))
-    }
-    
     private var cartFooterView: some View {
         VStack(spacing: 16) {
             Divider()
@@ -118,15 +88,24 @@ struct CartView: View {
                     
                     Divider()
                     
-                    HStack {
-                        Text("Total")
-                            .font(.headline)
-                            .fontWeight(.bold)
-                        Spacer()
-                        Text("\(Int(totalPrice + (totalPrice >= 1000 ? 0 : 99))) ₴")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundColor(.accentColor)
+                    VStack(spacing: 4) {
+                        HStack {
+                            Text(String(localized: "Total"))
+                                .font(.headline)
+                                .fontWeight(.bold)
+                            Spacer()
+                            Text("\(Int(totalPrice + (totalPrice >= 1000 ? 0 : 99))) ₴")
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundColor(.accentColor)
+                        }
+                        
+                        HStack {
+                            Text("\(totalQuantity) \(totalQuantity == 1 ? "item" : "items")")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                            Spacer()
+                        }
                     }
                 }
                 

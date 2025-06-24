@@ -22,7 +22,7 @@ struct ProductItemView {
                     Circle()
                         .fill(product.isAvailable ? Color.green : Color.red)
                         .frame(width: 8, height: 8)
-                    Text(product.availability.displayName)
+                    Text(product.availability == .inStock ? "Available" : "Not available")
                         .font(.caption)
                         .foregroundColor(product.isAvailable ? .green : .red)
                     Spacer()
