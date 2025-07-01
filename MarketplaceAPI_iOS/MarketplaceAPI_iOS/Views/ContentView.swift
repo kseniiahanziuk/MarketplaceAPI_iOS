@@ -3,8 +3,7 @@ import SwiftUI
 struct ContentView: View {
     @Binding var productFilter: ProductFilter
     @State private var chosenTab = 0
-    @State private var productItems: [ProductItem] = []
-    @State private var likedProducts: [Product] = []
+    @StateObject private var appController = AppController()
     @State private var showingCategories = false
     
     @AppStorage("isDarkMode") private var isDarkMode = false
@@ -12,7 +11,13 @@ struct ContentView: View {
     var body: some View {
         TabView(selection: $chosenTab) {
             NavigationView {
-                CatalogView(productItems: $productItems, likedProducts: $likedProducts, showingCategories: $showingCategories, productFilter: $productFilter)
+                CatalogView(
+                    productItems: $appController.cartItems,
+                    likedProducts: $appController.likedProducts,
+                    showingCategories: $showingCategories,
+                    productFilter: $productFilter
+                )
+                .environmentObject(appController)
             }
             .tabItem {
                 Image(systemName: "list.bullet.below.rectangle")
@@ -21,7 +26,8 @@ struct ContentView: View {
             .tag(0)
             
             NavigationView {
-                LikedView(likedProducts: $likedProducts)
+                LikedView(likedProducts: $appController.likedProducts)
+                    .environmentObject(appController)
             }
             .tabItem {
                 Image(systemName: "heart")
@@ -31,6 +37,7 @@ struct ContentView: View {
             
             NavigationView {
                 AccountView()
+                    .environmentObject(appController)
             }
             .tabItem {
                 Image(systemName: "person.fill")
@@ -46,8 +53,27 @@ struct ContentView: View {
         .onChange(of: chosenTab) { oldValue, newValue in
             let screenName = getScreenName(for: newValue)
             AnalyticsManager.shared.logScreenView(screenName)
-            // simple crashlytics test for fatal error
-            // CrashlyticsManager.shared.testCrash()
+        }
+        .alert("Product Error", isPresented: $appController.catalogController.showError) {
+            Button("OK") {
+                appController.catalogController.showError = false
+            }
+        } message: {
+            Text(appController.catalogController.errorMessage)
+        }
+        .alert("Order Error", isPresented: $appController.orderController.showError) {
+            Button("OK") {
+                appController.orderController.showError = false
+            }
+        } message: {
+            Text(appController.orderController.errorMessage)
+        }
+        .alert("Order created", isPresented: $appController.orderController.orderCreated) {
+            Button("OK") {
+                appController.orderController.orderCreated = false
+            }
+        } message: {
+            Text("Your order has been placed successfully!")
         }
     }
     

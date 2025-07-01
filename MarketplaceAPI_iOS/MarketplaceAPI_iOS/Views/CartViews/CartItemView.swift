@@ -3,11 +3,11 @@ import SwiftUI
 struct CartItemView: View {
     let item: ProductItem
     @Binding var cartItems: [ProductItem]
-    @State private var product: Product?
     @State private var showingDeleteAlert = false
+    @EnvironmentObject var appController: AppController
     
     private var currentQuantity: Int {
-        cartItems.first(where: { $0.id == item.id })?.quantity ?? item.quantity
+        appController.cartItems.first(where: { $0.id == item.id })?.quantity ?? item.quantity
     }
     
     var body: some View {
@@ -38,7 +38,7 @@ struct CartItemView: View {
             VStack(spacing: 8) {
                 HStack(spacing: 8) {
                     Button(action: {
-                        decreaseQuantity()
+                        appController.updateCartQuantity(item.productId, newQuantity: currentQuantity - 1)
                     }) {
                         Image(systemName: "minus.circle.fill")
                             .font(.title3)
@@ -52,7 +52,7 @@ struct CartItemView: View {
                         .frame(minWidth: 30)
                     
                     Button(action: {
-                        increaseQuantity()
+                        appController.updateCartQuantity(item.productId, newQuantity: currentQuantity + 1)
                     }) {
                         Image(systemName: "plus.circle.fill")
                             .font(.title3)
@@ -80,40 +80,13 @@ struct CartItemView: View {
         }
         .padding(.vertical, 8)
         .contentShape(Rectangle())
-        .onAppear {
-            loadProduct()
-        }
         .alert("Remove item", isPresented: $showingDeleteAlert) {
             Button("Cancel", role: .cancel) { }
             Button("Remove", role: .destructive) {
-                removeItem()
+                appController.removeFromCart(item.productId)
             }
         } message: {
             Text("Are you sure you want to remove \(item.name) from your cart?")
-        }
-    }
-    
-    private func loadProduct() {
-        product = Product.sampleProducts.first { $0.id == item.productId }
-    }
-    
-    private func increaseQuantity() {
-        if let index = cartItems.firstIndex(where: { $0.id == item.id }) {
-            cartItems[index].quantity += 1
-        }
-    }
-    
-    private func decreaseQuantity() {
-        if let index = cartItems.firstIndex(where: { $0.id == item.id }) {
-            if cartItems[index].quantity > 1 {
-                cartItems[index].quantity -= 1
-            }
-        }
-    }
-    
-    private func removeItem() {
-        if let index = cartItems.firstIndex(where: { $0.id == item.id }) {
-            cartItems.remove(at: index)
         }
     }
 }

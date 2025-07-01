@@ -3,23 +3,25 @@ import SwiftUI
 struct CartView: View {
     @Binding var cartItems: [ProductItem]
     @State private var showingClearAllAlert = false
+    @EnvironmentObject var appController: AppController
     
     var totalPrice: Double {
-        cartItems.reduce(0) { $0 + $1.totalPrice }
+        appController.getCartTotal()
     }
     
     var totalQuantity: Int {
-        cartItems.reduce(0) { $0 + $1.quantity }
+        appController.getCartItemCount()
     }
     
     var body: some View {
         VStack(spacing: 0) {
-            if cartItems.isEmpty {
+            if appController.cartItems.isEmpty {
                 emptyCartView
             } else {
                 List {
-                    ForEach(cartItems) { item in
+                    ForEach(appController.cartItems) { item in
                         CartItemView(item: item, cartItems: $cartItems)
+                            .environmentObject(appController)
                             .listRowSeparator(.hidden)
                             .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                     }
@@ -32,7 +34,7 @@ struct CartView: View {
         }
         .navigationTitle("Cart")
         .toolbar {
-            if !cartItems.isEmpty {
+            if !appController.cartItems.isEmpty {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Clear all") {
                         showingClearAllAlert = true
@@ -44,10 +46,13 @@ struct CartView: View {
         .alert("Clear cart", isPresented: $showingClearAllAlert) {
             Button("Cancel", role: .cancel) { }
             Button("Clear all", role: .destructive) {
-                cartItems.removeAll()
+                appController.clearCart()
             }
         } message: {
             Text("Are you sure you want to remove all items from your cart?")
+        }
+        .onAppear {
+            AnalyticsManager.shared.logCartViewed(itemCount: totalQuantity, totalValue: totalPrice)
         }
     }
     
@@ -125,20 +130,17 @@ struct CartView: View {
                 }
                 
                 Button(action: {
-                    print("Proceeding to checkout with \(cartItems.count) items")
-                    
-                    AnalyticsManager.shared.logPurchase(
-                        items: cartItems,
-                        totalValue: totalPrice + (totalPrice >= 1000 ? 0 : 99)
-                    )
-                    
-                    cartItems.removeAll()
-                    
-                    print("Purchase completed!")
+                    appController.createOrder()
                 }) {
                     HStack {
-                        Image(systemName: "creditcard.fill")
-                        Text("Proceed to checkout")
+                        if appController.orderController.isLoading {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                .scaleEffect(0.8)
+                        } else {
+                            Image(systemName: "creditcard.fill")
+                            Text("Proceed to checkout")
+                        }
                     }
                     .font(.headline)
                     .foregroundColor(.white)
@@ -147,6 +149,7 @@ struct CartView: View {
                     .background(Color.accentColor)
                     .cornerRadius(12)
                 }
+                .disabled(appController.orderController.isLoading)
                 .buttonStyle(PlainButtonStyle())
             }
             .padding(.horizontal, 16)
@@ -156,6 +159,9 @@ struct CartView: View {
     }
     
     private func removeItems(at offsets: IndexSet) {
-        cartItems.remove(atOffsets: offsets)
+        for index in offsets {
+            let item = appController.cartItems[index]
+            appController.removeFromCart(item.productId)
+        }
     }
 }
