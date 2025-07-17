@@ -11,6 +11,9 @@
         }
       }
     },
+    "(%lld)" : {
+
+    },
     "%@ has been added to your cart!" : {
       "localizations" : {
         "uk" : {
@@ -77,6 +80,29 @@
         }
       }
     },
+    "%lld review%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld review%2$@"
+          }
+        }
+      }
+    },
+    "%lld star%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld star%2$@"
+          }
+        }
+      }
+    },
+    "%lld/500" : {
+
+    },
     "₴%lld" : {
       "localizations" : {
         "uk" : {
@@ -127,6 +153,9 @@
         }
       }
     },
+    "Add review" : {
+
+    },
     "Add some products to get started." : {
       "localizations" : {
         "uk" : {
@@ -176,6 +205,9 @@
           }
         }
       }
+    },
+    "All orders" : {
+
     },
     "Apply filters" : {
       "localizations" : {
@@ -236,6 +268,12 @@
           }
         }
       }
+    },
+    "Be the first to review this product!" : {
+
+    },
+    "Be the first to share your thoughts about this product!" : {
+
     },
     "Brand" : {
       "localizations" : {
@@ -307,6 +345,9 @@
         }
       }
     },
+    "Clear" : {
+
+    },
     "Clear all" : {
       "localizations" : {
         "uk" : {
@@ -326,6 +367,9 @@
           }
         }
       }
+    },
+    "Close" : {
+
     },
     "Color" : {
       "localizations" : {
@@ -387,6 +431,9 @@
         }
       }
     },
+    "Done" : {
+
+    },
     "Edit profile" : {
       "localizations" : {
         "uk" : {
@@ -437,6 +484,12 @@
         }
       }
     },
+    "Estimated delivery" : {
+
+    },
+    "Failed to load product" : {
+
+    },
     "FAQ" : {
       "localizations" : {
         "uk" : {
@@ -456,6 +509,9 @@
           }
         }
       }
+    },
+    "Filtered by:" : {
+
     },
     "Filters" : {
       "localizations" : {
@@ -506,6 +562,9 @@
           }
         }
       }
+    },
+    "How would you rate this product?" : {
+
     },
     "In stock" : {
       "localizations" : {
@@ -577,6 +636,21 @@
         }
       }
     },
+    "Loading active orders..." : {
+
+    },
+    "Loading categories..." : {
+
+    },
+    "Loading more orders..." : {
+
+    },
+    "Loading orders..." : {
+
+    },
+    "Loading product details..." : {
+
+    },
     "Loading products..." : {
       "localizations" : {
         "uk" : {
@@ -586,6 +660,12 @@
           }
         }
       }
+    },
+    "Loading reviews..." : {
+
+    },
+    "Loading..." : {
+
     },
     "Logout" : {
       "localizations" : {
@@ -657,6 +737,12 @@
         }
       }
     },
+    "Next" : {
+
+    },
+    "No active orders" : {
+
+    },
     "No addresses saved" : {
       "localizations" : {
         "uk" : {
@@ -667,7 +753,14 @@
         }
       }
     },
+    "No brands available" : {
+
+    },
+    "No colors available" : {
+
+    },
     "No orders to track" : {
+      "extractionState" : "stale",
       "localizations" : {
         "uk" : {
           "stringUnit" : {
@@ -707,6 +800,9 @@
         }
       }
     },
+    "No reviews yet" : {
+
+    },
     "Not available" : {
       "localizations" : {
         "uk" : {
@@ -737,6 +833,9 @@
         }
       }
     },
+    "Order cancelled" : {
+
+    },
     "Order created" : {
       "localizations" : {
         "uk" : {
@@ -746,6 +845,9 @@
           }
         }
       }
+    },
+    "Order details" : {
+
     },
     "Order Error" : {
       "localizations" : {
@@ -797,6 +899,16 @@
         }
       }
     },
+    "Page %lld of %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Page %1$lld of %2$lld"
+          }
+        }
+      }
+    },
     "Payment methods" : {
       "localizations" : {
         "uk" : {
@@ -807,6 +919,15 @@
         }
       }
     },
+    "Placed %@" : {
+
+    },
+    "Placed on %@" : {
+
+    },
+    "Please try again" : {
+
+    },
     "Preferences" : {
       "localizations" : {
         "uk" : {
@@ -816,6 +937,9 @@
           }
         }
       }
+    },
+    "Previous" : {
+
     },
     "Price range" : {
       "localizations" : {
@@ -967,6 +1091,9 @@
         }
       }
     },
+    "Retry" : {
+
+    },
     "Return policy" : {
       "localizations" : {
         "uk" : {
@@ -976,6 +1103,15 @@
           }
         }
       }
+    },
+    "Review" : {
+
+    },
+    "Review submitted" : {
+
+    },
+    "Reviews" : {
+
     },
     "Save" : {
       "localizations" : {
@@ -996,6 +1132,12 @@
           }
         }
       }
+    },
+    "See all" : {
+
+    },
+    "Share your thoughts about this product" : {
+
     },
     "Shipping" : {
       "localizations" : {
@@ -1047,6 +1189,9 @@
         }
       }
     },
+    "Submit" : {
+
+    },
     "Support" : {
       "localizations" : {
         "uk" : {
@@ -1076,6 +1221,9 @@
           }
         }
       }
+    },
+    "Thank you for your review!" : {
+
     },
     "The app needs to restart to fully apply language changes." : {
       "localizations" : {
@@ -1117,6 +1265,9 @@
         }
       }
     },
+    "Tracking progress" : {
+
+    },
     "Try adjusting your search or filters." : {
       "localizations" : {
         "uk" : {
@@ -1126,6 +1277,9 @@
           }
         }
       }
+    },
+    "Vendor ID" : {
+
     },
     "Version 1.0.0" : {
       "localizations" : {
@@ -1147,6 +1301,18 @@
         }
       }
     },
+    "Write a review" : {
+
+    },
+    "Write first review" : {
+
+    },
+    "Write your review here..." : {
+
+    },
+    "You don't have any orders to track right now. Orders with pending, confirmed, or shipped status will appear here." : {
+
+    },
     "Your cart is empty" : {
       "localizations" : {
         "uk" : {
@@ -1167,6 +1333,9 @@
         }
       }
     },
+    "Your name" : {
+
+    },
     "Your order has been placed successfully!" : {
       "localizations" : {
         "uk" : {
@@ -1176,6 +1345,9 @@
           }
         }
       }
+    },
+    "Your order history will appear here once you make your first purchase." : {
+
     }
   },
   "version" : "1.0"

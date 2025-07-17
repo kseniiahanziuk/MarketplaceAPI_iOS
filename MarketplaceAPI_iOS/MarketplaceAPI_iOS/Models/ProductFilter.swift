@@ -1,7 +1,7 @@
 import Foundation
 
 struct ProductFilter: Equatable {
-    var selectedCategories: Set<String> = []
+    var selectedCategories: Set<String> = ["All"]
     var selectedBrands: Set<String> = []
     var selectedColors: Set<String> = []
     var priceRange: ClosedRange<Double> = 0...100000
@@ -31,90 +31,105 @@ struct ProductFilter: Equatable {
         }
         
         if !selectedCategories.isEmpty && !selectedCategories.contains("All") {
-            params["filter[category]"] = selectedCategories.first
+            if let firstCategory = selectedCategories.first {
+                params["category"] = firstCategory
+                params["filter[category]"] = firstCategory
+                params["categoryName"] = firstCategory
+                
+                print("Setting category filter to: \(firstCategory)")
+            }
         }
         
         switch availabilityFilter {
         case .inStock:
+            params["available"] = "true"
             params["filter[available]"] = "true"
+            params["filter[availability]"] = "true"
         case .outOfStock:
+            params["available"] = "false"
             params["filter[available]"] = "false"
+            params["filter[availability]"] = "false"
         case .all:
             break
         }
         
         if priceRange.lowerBound > 0 {
-            params["filter[minPrice]"] = String(priceRange.lowerBound)
+            params["minPrice"] = String(Int(priceRange.lowerBound))
+            params["filter[minPrice]"] = String(Int(priceRange.lowerBound))
         }
         if priceRange.upperBound < 100000 {
-            params["filter[maxPrice]"] = String(priceRange.upperBound)
+            params["maxPrice"] = String(Int(priceRange.upperBound))
+            params["filter[maxPrice]"] = String(Int(priceRange.upperBound))
         }
         
         if !selectedBrands.isEmpty {
-            params["filter[brand]"] = selectedBrands.first
+            if let firstBrand = selectedBrands.first {
+                params["brand"] = firstBrand
+                params["filter[brand]"] = firstBrand
+                
+                print("Setting brand filter to: \(firstBrand)")
+            }
         }
         
         if !selectedColors.isEmpty {
-            params["filter[color]"] = selectedColors.first
+            if let firstColor = selectedColors.first {
+                params["color"] = firstColor
+                params["filter[color]"] = firstColor
+                
+                print("Setting color filter to: \(firstColor)")
+            }
         }
         
+        print("Final query params: \(params)")
         return params
     }
-}
-
-enum SortOption: String, CaseIterable, Equatable {
-    case name = "Name"
-    case priceAsc = "Price: ascending"
-    case priceDesc = "Price: descending"
-    case rating = "Rating"
     
-    var displayName: String {
-        switch self {
-        case .name:
-            return String(localized: "Name")
-        case .priceAsc:
-            return String(localized: "Price: ascending")
-        case .priceDesc:
-            return String(localized: "Price: descending")
-        case .rating:
-            return String(localized: "Rating")
-        }
+    var hasActiveFilters: Bool {
+        return !selectedCategories.contains("All") ||
+               !selectedBrands.isEmpty ||
+               !selectedColors.isEmpty ||
+               priceRange.lowerBound > 0 ||
+               priceRange.upperBound < 100000 ||
+               availabilityFilter != .all ||
+               sortBy != .name
     }
     
-    var apiFieldName: String {
-        switch self {
-        case .name:
-            return "name"
-        case .priceAsc, .priceDesc:
-            return "price"
-        case .rating:
-            return "rating"
+    var filterSummary: String {
+        var components: [String] = []
+        
+        if !selectedCategories.contains("All") && !selectedCategories.isEmpty {
+            components.append("\(selectedCategories.count) categories")
         }
+        
+        if !selectedBrands.isEmpty {
+            components.append("\(selectedBrands.count) brands")
+        }
+        
+        if !selectedColors.isEmpty {
+            components.append("\(selectedColors.count) colors")
+        }
+        
+        if priceRange.lowerBound > 0 || priceRange.upperBound < 100000 {
+            components.append("₴\(Int(priceRange.lowerBound))-₴\(Int(priceRange.upperBound))")
+        }
+        
+        if availabilityFilter != .all {
+            components.append(availabilityFilter.displayName)
+        }
+        
+        if sortBy != .name {
+            components.append("Sort: \(sortBy.displayName)")
+        }
+        
+        return components.isEmpty ? "No filters" : components.joined(separator: ", ")
     }
     
-    var apiDirection: String {
-        switch self {
-        case .name, .priceAsc:
-            return "ASC"
-        case .priceDesc, .rating:
-            return "DESC"
-        }
-    }
-}
-
-enum AvailabilityFilter: String, CaseIterable, Equatable {
-    case all = "All"
-    case inStock = "In stock"
-    case outOfStock = "Out of stock"
-    
-    var displayName: String {
-        switch self {
-        case .all:
-            return String(localized: "All")
-        case .inStock:
-            return String(localized: "In stock")
-        case .outOfStock:
-            return String(localized: "Out of stock")
-        }
+    mutating func reset() {
+        selectedCategories = ["All"]
+        selectedBrands = []
+        selectedColors = []
+        priceRange = 0...100000
+        sortBy = .name
+        availabilityFilter = .all
     }
 }

@@ -54,15 +54,23 @@ struct MarketplaceAPI_iOSApp: App {
     }
     
     private func setupUserTracking() {
+        let customerId = getOrCreateCustomerId()
+        
         if let userEmail = UserDefaults.standard.string(forKey: "userEmail"),
            let userName = UserDefaults.standard.string(forKey: "userName") {
             
             Analytics.setUserProperty(userEmail, forName: "user_email")
             Analytics.setUserProperty(userName, forName: "user_name")
+            Analytics.setUserProperty(customerId, forName: "customer_id")
             
             CrashlyticsManager.shared.setUserEmail(userEmail)
             CrashlyticsManager.shared.setUserName(userName)
-            CrashlyticsManager.shared.setUserID(userEmail)
+            CrashlyticsManager.shared.setUserID(customerId)
+            CrashlyticsManager.shared.setCustomKey("customer_id", value: customerId)
+        } else {
+            Analytics.setUserProperty(customerId, forName: "customer_id")
+            CrashlyticsManager.shared.setUserID(customerId)
+            CrashlyticsManager.shared.setCustomKey("customer_id", value: customerId)
         }
         
         let deviceModel = UIDevice.current.model
@@ -73,5 +81,16 @@ struct MarketplaceAPI_iOSApp: App {
         
         CrashlyticsManager.shared.setCustomKey("device_model", value: deviceModel)
         CrashlyticsManager.shared.setCustomKey("ios_version", value: systemVersion)
+    }
+    
+    private func getOrCreateCustomerId() -> String {
+        if let existingCustomerId = UserDefaults.standard.string(forKey: "customerId"),
+           !existingCustomerId.isEmpty {
+            return existingCustomerId
+        } else {
+            let newCustomerId = UUID().uuidString
+            UserDefaults.standard.set(newCustomerId, forKey: "customerId")
+            return newCustomerId
+        }
     }
 }

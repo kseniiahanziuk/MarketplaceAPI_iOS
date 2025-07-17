@@ -61,10 +61,25 @@ class CatalogService {
     
     func getProducts(
         filter: ProductFilter = ProductFilter(),
+        searchTerm: String? = nil,
+        completion: @escaping (Result<[Product], Error>) -> Void
+    ) {
+        getProducts(filter: filter, page: 0, size: 50, searchTerm: searchTerm) { result in
+            switch result {
+            case .success(let response):
+                completion(.success(response.products))
+            case .failure(let error):
+                completion(.failure(error))
+            }
+        }
+    }
+    
+    func getProducts(
+        filter: ProductFilter = ProductFilter(),
         page: Int = 0,
         size: Int = 20,
         searchTerm: String? = nil,
-        completion: @escaping (Result<[Product], Error>) -> Void
+        completion: @escaping (Result<PaginatedProductsResponse, Error>) -> Void
     ) {
         let queryParams = filter.toAPIQueryParams(page: page, size: size, searchTerm: searchTerm)
         
@@ -77,15 +92,9 @@ class CatalogService {
                         return
                     }
                     
-                    if let contentArray = jsonObject["content"] as? [[String: Any]] {
-                        let products = contentArray.map { Product(from: $0) }
-                        completion(.success(products))
-                    } else if let productsArray = jsonObject["products"] as? [[String: Any]] {
-                        let products = productsArray.map { Product(from: $0) }
-                        completion(.success(products))
-                    } else {
-                        completion(.failure(APIError(message: "No products found in response", code: "NO_PRODUCTS", details: nil)))
-                    }
+                    let response = self.parseProductsResponse(jsonObject)
+                    completion(.success(response))
+                    
                 } catch {
                     completion(.failure(APIError(
                         message: "Failed to parse products",
@@ -99,8 +108,54 @@ class CatalogService {
         }
     }
     
+    private func parseProductsResponse(_ jsonObject: [String: Any]) -> PaginatedProductsResponse {
+        var products: [Product] = []
+        var totalPages: Int? = nil
+        var totalElements: Int? = nil
+        var currentPage: Int? = nil
+        var size: Int? = nil
+        
+        if let contentArray = jsonObject["content"] as? [[String: Any]] {
+            products = contentArray.map { Product(from: $0) }
+            
+            totalPages = jsonObject["totalPages"] as? Int
+            totalElements = jsonObject["totalElements"] as? Int
+            currentPage = jsonObject["number"] as? Int
+            size = jsonObject["size"] as? Int
+            
+        } else if let productsArray = jsonObject["products"] as? [[String: Any]] {
+            products = productsArray.map { Product(from: $0) }
+            
+            totalPages = jsonObject["totalPages"] as? Int ?? jsonObject["total_pages"] as? Int
+            totalElements = jsonObject["totalElements"] as? Int ?? jsonObject["total_elements"] as? Int ?? jsonObject["total"] as? Int
+            currentPage = jsonObject["currentPage"] as? Int ?? jsonObject["current_page"] as? Int ?? jsonObject["page"] as? Int
+            size = jsonObject["size"] as? Int ?? jsonObject["page_size"] as? Int
+            
+        } else {
+            if let directArray = jsonObject as? [[String: Any]] {
+                products = directArray.map { Product(from: $0) }
+            }
+        }
+        
+        let hasMore: Bool
+        if let totalPages = totalPages, let currentPage = currentPage {
+            hasMore = currentPage < totalPages - 1
+        } else {
+            hasMore = products.count >= (size ?? 20)
+        }
+        
+        return PaginatedProductsResponse(
+            products: products,
+            totalPages: totalPages,
+            totalElements: totalElements,
+            currentPage: currentPage,
+            size: size,
+            hasMore: hasMore
+        )
+    }
+    
     func getProduct(id: String, completion: @escaping (Result<Product, Error>) -> Void) {
-        makeRequest(endpoint: "/catalog/products/\(id)") { result in
+        makeRequest(endpoint: "/catalog/products/id/\(id)") { result in
             switch result {
             case .success(let data):
                 do {
@@ -127,9 +182,35 @@ class CatalogService {
         searchTerm: String,
         page: Int = 0,
         size: Int = 20,
-        completion: @escaping (Result<[Product], Error>) -> Void
+        completion: @escaping (Result<PaginatedProductsResponse, Error>) -> Void
     ) {
         let filter = ProductFilter()
         getProducts(filter: filter, page: page, size: size, searchTerm: searchTerm, completion: completion)
+    }
+    
+    func getAvailableBrands(completion: @escaping (Result<[String], Error>) -> Void) {
+        let filter = ProductFilter()
+        getProducts(filter: filter, page: 0, size: 100) { result in
+            switch result {
+            case .success(let response):
+                let uniqueBrands = Array(Set(response.products.map { $0.brand })).sorted()
+                completion(.success(uniqueBrands))
+            case .failure(let error):
+                completion(.failure(error))
+            }
+        }
+    }
+    
+    func getAvailableColors(completion: @escaping (Result<[String], Error>) -> Void) {
+        let filter = ProductFilter()
+        getProducts(filter: filter, page: 0, size: 100) { result in
+            switch result {
+            case .success(let response):
+                let uniqueColors = Array(Set(response.products.map { $0.color })).sorted()
+                completion(.success(uniqueColors))
+            case .failure(let error):
+                completion(.failure(error))
+            }
+        }
     }
 }

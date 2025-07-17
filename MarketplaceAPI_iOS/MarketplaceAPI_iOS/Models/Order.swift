@@ -8,16 +8,23 @@ struct Order: Identifiable {
     let totalAmount: Double
     let status: OrderStatus
     let createdAt: Date
+    let updatedAt: Date
     let shippingAddress: String
     
     init(from apiResponse: [String: Any]) {
-        self.id = apiResponse["id"] as? String ?? ""
-        self.customerId = apiResponse["customerId"] as? String ?? ""
+        let normalizedResponse = normalizeOrderFields(apiResponse)
         
-        let apiItems = apiResponse["items"] as? [[String: Any]] ?? []
+        if !validateOrderResponse(apiResponse) {
+            print("Warning: Order response validation failed")
+        }
+        
+        self.id = normalizedResponse["id"] as? String ?? ""
+        self.customerId = normalizedResponse["customer_id"] as? String ?? normalizedResponse["customerId"] as? String ?? ""
+        
+        let apiItems = normalizedResponse["items"] as? [[String: Any]] ?? []
         self.items = apiItems.map { itemDict in
             ProductItem(
-                productId: itemDict["productId"] as? String ?? "",
+                productId: itemDict["product_id"] as? String ?? itemDict["productId"] as? String ?? "",
                 name: "Product",
                 price: 0.0,
                 quantity: itemDict["quantity"] as? Int ?? 1,
@@ -25,87 +32,49 @@ struct Order: Identifiable {
             )
         }
         
-        self.totalAmount = apiResponse["totalAmount"] as? Double ?? 0.0
+        if let totalPrice = normalizedResponse["total_price"] as? Double {
+            self.totalAmount = totalPrice
+        } else if let totalAmount = normalizedResponse["totalAmount"] as? Double {
+            self.totalAmount = totalAmount
+        } else {
+            self.totalAmount = 0.0
+        }
         
-        let statusString = apiResponse["status"] as? String ?? "pending"
-        self.status = OrderStatus(rawValue: statusString) ?? .pending
+        let statusString = normalizedResponse["status"] as? String ?? "PENDING"
+        self.status = OrderStatus.fromAPIStatus(statusString)
         
-        if let createdAtString = apiResponse["createdAt"] as? String {
+        if let createdAtString = normalizedResponse["created_at"] as? String ?? normalizedResponse["createdAt"] as? String {
             let formatter = ISO8601DateFormatter()
             self.createdAt = formatter.date(from: createdAtString) ?? Date()
         } else {
             self.createdAt = Date()
         }
         
-        self.shippingAddress = apiResponse["shippingAddress"] as? String ?? ""
+        if let updatedAtString = normalizedResponse["updated_at"] as? String ?? normalizedResponse["updatedAt"] as? String {
+            let formatter = ISO8601DateFormatter()
+            self.updatedAt = formatter.date(from: updatedAtString) ?? Date()
+        } else {
+            self.updatedAt = Date()
+        }
+        
+        self.shippingAddress = normalizedResponse["shippingAddress"] as? String ?? ""
     }
     
-    init(id: String, customerId: String, items: [ProductItem], totalAmount: Double, status: OrderStatus, createdAt: Date, shippingAddress: String) {
+    init(id: String, customerId: String, items: [ProductItem], totalAmount: Double, status: OrderStatus, createdAt: Date, updatedAt: Date, shippingAddress: String) {
         self.id = id
         self.customerId = customerId
         self.items = items
         self.totalAmount = totalAmount
         self.status = status
         self.createdAt = createdAt
+        self.updatedAt = updatedAt
         self.shippingAddress = shippingAddress
     }
     
     func toCreateOrderRequest() -> [String: Any] {
         return [
-            "customerId": customerId,
+            "customer_id": customerId,
             "items": items.map { $0.toOrderItem() }
         ]
-    }
-    
-    func toUpdateOrderRequest() -> [String: Any] {
-        let formatter = ISO8601DateFormatter()
-        return [
-            "customerId": customerId,
-            "items": items.map { $0.toOrderItem() },
-            "status": status.rawValue,
-            "shippingAddress": shippingAddress
-        ]
-    }
-    
-    func toStatusUpdateRequest() -> [String: Any] {
-        return [
-            "status": status.rawValue
-        ]
-    }
-}
-
-enum OrderStatus: String {
-    case pending = "Pending"
-    case confirmed = "Confirmed"
-    case shipped = "Shipped"
-    case delivered = "Delivered"
-    case cancelled = "Cancelled"
-    
-    var displayName: String {
-        switch self {
-        case .pending: return "Pending"
-        case .confirmed: return "Confirmed"
-        case .shipped: return "Shipped"
-        case .delivered: return "Delivered"
-        case .cancelled: return "Cancelled"
-        }
-    }
-    
-    var color: Color {
-        switch self {
-        case .pending: return .orange
-        case .confirmed: return .yellow
-        case .shipped: return .blue
-        case .delivered: return .green
-        case .cancelled: return .red
-        }
-    }
-    
-    static func fromAPIStatus(_ apiStatus: String) -> OrderStatus {
-        return OrderStatus(rawValue: apiStatus.lowercased()) ?? .pending
-    }
-    
-    var apiStatus: String {
-        return self.rawValue.uppercased()
     }
 }

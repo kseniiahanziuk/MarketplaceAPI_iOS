@@ -6,6 +6,7 @@ struct CatalogView: View {
     @Binding var showingCategories: Bool
     @Binding var productFilter: ProductFilter
     @State private var searchText = ""
+    @State private var searchWorkItem: DispatchWorkItem?
     @FocusState private var isSearchFocused: Bool
     @EnvironmentObject var appController: AppController
     
@@ -19,9 +20,10 @@ struct CatalogView: View {
     
     var body: some View {
         ZStack {
-            VStack {
+            VStack(spacing: 0) {
                 headerView
                 contentView
+                paginationView
                 Rectangle()
                     .fill(Color.gray.opacity(0.3))
                     .frame(height: 1)
@@ -37,21 +39,46 @@ struct CatalogView: View {
             AnalyticsManager.shared.logScreenView("catalog")
         }
         .onChange(of: searchText) { oldValue, newValue in
-            if newValue.count >= 3 {
-                appController.searchProducts(newValue, filter: productFilter)
-            } else if newValue.isEmpty {
-                appController.catalogController.refreshProducts(filter: productFilter)
-            }
+            handleSearchChange(newValue)
         }
         .onChange(of: productFilter) { oldValue, newValue in
-            appController.applyFilter(newValue, searchTerm: searchText)
+            performSearch()
         }
         .alert("Error", isPresented: $appController.catalogController.showError) {
+            Button("Retry") {
+                performSearch()
+            }
             Button("OK") {
                 appController.catalogController.showError = false
             }
         } message: {
             Text(appController.catalogController.errorMessage)
+        }
+    }
+    
+    private func handleSearchChange(_ newValue: String) {
+        searchWorkItem?.cancel()
+        
+        let workItem = DispatchWorkItem {
+            performSearch()
+        }
+        
+        searchWorkItem = workItem
+        
+        if newValue.isEmpty {
+            DispatchQueue.main.async(execute: workItem)
+        } else {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: workItem)
+        }
+    }
+    
+    private func performSearch() {
+        print("Performing search with text: '\(searchText)' and filter: \(productFilter.selectedCategories)")
+        
+        if searchText.isEmpty {
+            appController.catalogController.refreshProducts(filter: productFilter, searchTerm: "")
+        } else {
+            appController.catalogController.searchProducts(searchText, filter: productFilter)
         }
     }
     
@@ -88,6 +115,16 @@ struct CatalogView: View {
                 }
             }
             .padding(.horizontal, 16)
+            
+            if appController.catalogController.totalProducts > 0 {
+                HStack {
+                    Text(appController.catalogController.getPaginationInfo())
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Spacer()
+                }
+                .padding(.horizontal, 16)
+            }
             
             Rectangle()
                 .fill(Color.gray.opacity(0.3))
@@ -144,7 +181,8 @@ struct CatalogView: View {
             ], spacing: 16) {
                 ForEach(Array(displayProducts.enumerated()), id: \.element.id) { index, product in
                     NavigationLink(destination: ProductDetailView(
-                        product: product,
+                        productId: product.id,
+                        fallbackProduct: product,
                         cartItems: $productItems,
                         likedProducts: $likedProducts
                     ).environmentObject(appController)) {
@@ -153,19 +191,22 @@ struct CatalogView: View {
                     .buttonStyle(PlainButtonStyle())
                     .simultaneousGesture(TapGesture().onEnded {
                         AnalyticsManager.shared.logProductCardTapped(product, position: index)
-                    })
-                    .onAppear {
-                        if index == displayProducts.count - 3 {
-                            appController.loadMoreProducts(filter: productFilter, searchTerm: searchText)
+                        
+                        if !searchText.isEmpty {
+                            AnalyticsManager.shared.logSearchResultInteraction(
+                                searchTerm: searchText,
+                                resultPosition: index,
+                                productId: product.id
+                            )
                         }
-                    }
+                    })
                 }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 16)
         }
         .refreshable {
-            appController.catalogController.refreshProducts(filter: productFilter, searchTerm: searchText)
+            performSearch()
         }
         .onTapGesture {
             if isSearchFocused {
@@ -174,10 +215,30 @@ struct CatalogView: View {
         }
     }
     
+    private var paginationView: some View {
+        Group {
+            if appController.catalogController.totalPages > 1 || appController.catalogController.hasMoreProducts {
+                PaginationView(
+                    currentPage: appController.catalogController.currentPage,
+                    totalPages: appController.catalogController.totalPages,
+                    hasMoreProducts: appController.catalogController.hasMoreProducts,
+                    isLoading: appController.catalogController.isLoading,
+                    onPageChange: { page in
+                        appController.catalogController.goToPage(page, filter: productFilter, searchTerm: searchText)
+                    },
+                    onLoadMore: {
+                        appController.catalogController.loadMoreProducts(filter: productFilter, searchTerm: searchText)
+                    }
+                )
+            }
+        }
+    }
+    
     private var categoriesOverlay: some View {
         HStack(spacing: 0) {
             VStack(spacing: 0) {
                 CategoriesSliderView(showingCategories: $showingCategories, productFilter: $productFilter)
+                    .environmentObject(appController)
             }
             .frame(width: 320)
             .frame(maxHeight: .infinity)

@@ -4,6 +4,7 @@ struct AccountView: View {
     @AppStorage("isDarkMode") private var isDarkMode = false
     @AppStorage("userName") private var userName = "User"
     @AppStorage("userEmail") private var userEmail = "user@gmail.com"
+    @AppStorage("customerId") private var customerId = ""
     @State private var showingEditProfile = false
     @State private var showingOrderHistory = false
     @State private var showingSettings = false
@@ -253,7 +254,7 @@ struct AccountView: View {
     private func logout() {
         AnalyticsManager.shared.logCustomEvent("user_logout", parameters: [
             "logout_timestamp": Date().timeIntervalSince1970,
-            "user_email": userEmail
+            "customerId": customerId
         ])
         print("User logged out")
     }

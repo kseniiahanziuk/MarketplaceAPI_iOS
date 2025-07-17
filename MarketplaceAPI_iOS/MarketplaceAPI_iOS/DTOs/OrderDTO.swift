@@ -7,6 +7,7 @@ struct OrderDTO: Codable {
     let totalAmount: Double
     let status: String
     let createdAt: String
+    let updatedAt: String
     let shippingAddress: String?
     
     func toDomainModel() -> Order {
@@ -24,6 +25,7 @@ struct OrderDTO: Codable {
         
         let dateFormatter = ISO8601DateFormatter()
         let createdDate = dateFormatter.date(from: createdAt) ?? Date()
+        let updatedDate = dateFormatter.date(from: updatedAt) ?? Date()
         
         return Order(
             id: id,
@@ -32,6 +34,7 @@ struct OrderDTO: Codable {
             totalAmount: totalAmount,
             status: orderStatus,
             createdAt: createdDate,
+            updatedAt: updatedDate,
             shippingAddress: shippingAddress ?? ""
         )
     }

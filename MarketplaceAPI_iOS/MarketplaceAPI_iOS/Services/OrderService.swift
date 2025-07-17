@@ -4,9 +4,14 @@ class OrderService {
     static let shared = OrderService()
     
     private let baseURL = "https://marketplaceapi-storefront-orders.onrender.com"
-    private let session = URLSession.shared
+    private let session: URLSession
     
-    private init() {}
+    private init() {
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 30.0
+        config.timeoutIntervalForResource = 60.0
+        self.session = URLSession(configuration: config)
+    }
     
     private func makeRequest(
         endpoint: String,
@@ -25,7 +30,7 @@ class OrderService {
             return
         }
         
-        print("Making request to: \(url)")
+        print("Making \(method) request to: \(url)")
         
         var request = URLRequest(url: url)
         request.httpMethod = method
@@ -34,38 +39,57 @@ class OrderService {
         
         if let body = body {
             do {
-                request.httpBody = try JSONSerialization.data(withJSONObject: body)
-                print("Request body: \(body)")
+                let jsonData = try JSONSerialization.data(withJSONObject: body, options: .prettyPrinted)
+                request.httpBody = jsonData
+                
+                if let jsonString = String(data: jsonData, encoding: .utf8) {
+                    print("Request body:")
+                    print(jsonString)
+                }
             } catch {
+                print("Failed to serialize request body: \(error)")
                 completion(.failure(error))
                 return
             }
         }
         
-        session.dataTask(with: request) { data, response, error in
-            DispatchQueue.main.async {
-                if let error = error {
-                    print("Network error: \(error)")
+        let task = session.dataTask(with: request) { data, response, error in
+            print("Response received")
+            
+            if let error = error {
+                print("Network error: \(error)")
+                DispatchQueue.main.async {
                     completion(.failure(error))
-                    return
                 }
-                
-                guard let httpResponse = response as? HTTPURLResponse else {
+                return
+            }
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                print("Invalid response type")
+                DispatchQueue.main.async {
                     completion(.failure(APIError(message: "Invalid response", code: "INVALID_RESPONSE", details: nil)))
-                    return
                 }
-                
-                print("HTTP Status Code: \(httpResponse.statusCode)")
-                
-                guard let data = data else {
+                return
+            }
+            
+            print("HTTP status code: \(httpResponse.statusCode)")
+            print("Response headers: \(httpResponse.allHeaderFields)")
+            
+            guard let data = data else {
+                print("No data received")
+                DispatchQueue.main.async {
                     completion(.failure(APIError(message: "No data received", code: "NO_DATA", details: nil)))
-                    return
                 }
-                
-                if let dataString = String(data: data, encoding: .utf8) {
-                    print("Response data: \(dataString.prefix(500))")
-                }
-                
+                return
+            }
+            
+            print("Response data size: \(data.count) bytes")
+            if let dataString = String(data: data, encoding: .utf8) {
+                print("Response data:")
+                print(dataString)
+            }
+            
+            DispatchQueue.main.async {
                 if httpResponse.statusCode >= 200 && httpResponse.statusCode < 300 {
                     completion(.success(data))
                 } else {
@@ -81,73 +105,18 @@ class OrderService {
                     }
                 }
             }
-        }.resume()
-    }
-    
-    func getProducts(
-        filter: ProductFilter = ProductFilter(),
-        page: Int = 0,
-        size: Int = 20,
-        searchTerm: String? = nil,
-        completion: @escaping (Result<[Product], Error>) -> Void
-    ) {
-        let queryParams = filter.toAPIQueryParams(page: page, size: size, searchTerm: searchTerm)
+        }
         
-        makeRequest(
-            endpoint: "/catalog/products",
-            queryParams: queryParams
-        ) { result in
-            switch result {
-            case .success(let data):
-                do {
-                    if let jsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
-                        let products = parseProductsFromAPI(jsonObject)
-                        completion(.success(products))
-                    } else if let productsArray = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] {
-                        let products = productsArray.map { Product(from: $0) }
-                        completion(.success(products))
-                    } else {
-                        completion(.failure(APIError(message: "Invalid response format", code: "INVALID_FORMAT", details: nil)))
-                    }
-                } catch {
-                    print("JSON parsing error: \(error)")
-                    completion(.failure(APIError(message: "Failed to parse products", code: "PARSE_ERROR", details: error.localizedDescription)))
-                }
-            case .failure(let error):
-                completion(.failure(error))
+        print("Starting network task")
+        task.resume()
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 30) {
+            print("30 second timeout check")
+            if task.state == .running {
+                print("Request still running after 30 seconds - potential timeout")
+                task.cancel()
             }
         }
-    }
-    
-    func getProduct(id: String, completion: @escaping (Result<Product, Error>) -> Void) {
-        makeRequest(endpoint: "/catalog/products/\(id)") { result in
-            switch result {
-            case .success(let data):
-                do {
-                    if let jsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
-                        let product = Product(from: jsonObject)
-                        completion(.success(product))
-                    } else {
-                        completion(.failure(APIError(message: "Invalid product format", code: "INVALID_FORMAT", details: nil)))
-                    }
-                } catch {
-                    print("JSON parsing error: \(error)")
-                    completion(.failure(APIError(message: "Failed to parse product", code: "PARSE_ERROR", details: error.localizedDescription)))
-                }
-            case .failure(let error):
-                completion(.failure(error))
-            }
-        }
-    }
-    
-    func searchProducts(
-        searchTerm: String,
-        page: Int = 0,
-        size: Int = 20,
-        completion: @escaping (Result<[Product], Error>) -> Void
-    ) {
-        let filter = ProductFilter()
-        getProducts(filter: filter, page: page, size: size, searchTerm: searchTerm, completion: completion)
     }
     
     func createOrder(
@@ -155,6 +124,9 @@ class OrderService {
         cartItems: [ProductItem],
         completion: @escaping (Result<Order, Error>) -> Void
     ) {
+        print("Creating order for customer: \(customerId)")
+        print("Cart items count: \(cartItems.count)")
+        
         let requestBody = createOrderRequestFromCart(customerId: customerId, cartItems: cartItems)
         
         makeRequest(
@@ -167,8 +139,10 @@ class OrderService {
                 do {
                     if let jsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
                         let order = Order(from: jsonObject)
+                        print("Order created successfully: \(order.id)")
                         completion(.success(order))
                     } else {
+                        print("Invalid order format in response")
                         completion(.failure(APIError(message: "Invalid order format", code: "INVALID_FORMAT", details: nil)))
                     }
                 } catch {
@@ -176,6 +150,34 @@ class OrderService {
                     completion(.failure(APIError(message: "Failed to parse order", code: "PARSE_ERROR", details: error.localizedDescription)))
                 }
             case .failure(let error):
+                print("Order creation failed: \(error)")
+                completion(.failure(error))
+            }
+        }
+    }
+    
+    func getOrderStatus(id: String, completion: @escaping (Result<OrderStatus, Error>) -> Void) {
+        print("Getting status for order: \(id)")
+        
+        makeRequest(endpoint: "/orders/\(id)/status") { result in
+            switch result {
+            case .success(let data):
+                do {
+                    if let jsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                       let statusString = jsonObject["status"] as? String {
+                        let orderStatus = OrderStatus.fromAPIStatus(statusString)
+                        print("Order status retrieved: \(orderStatus.rawValue)")
+                        completion(.success(orderStatus))
+                    } else {
+                        print("Invalid status format in response")
+                        completion(.failure(APIError(message: "Invalid status format", code: "INVALID_FORMAT", details: nil)))
+                    }
+                } catch {
+                    print("JSON parsing error: \(error)")
+                    completion(.failure(APIError(message: "Failed to parse status", code: "PARSE_ERROR", details: error.localizedDescription)))
+                }
+            case .failure(let error):
+                print("Failed to get order status: \(error)")
                 completion(.failure(error))
             }
         }
@@ -185,10 +187,16 @@ class OrderService {
         page: Int = 0,
         size: Int = 20,
         status: OrderStatus? = nil,
-        customerId: String? = nil,
+        customerId: String,
         completion: @escaping (Result<[Order], Error>) -> Void
     ) {
+        guard !customerId.isEmpty else {
+            completion(.failure(APIError(message: "Customer ID is required", code: "MISSING_CUSTOMER_ID", details: nil)))
+            return
+        }
+        
         var queryParams: [String: String] = [
+            "customerId": customerId,
             "page": String(page),
             "size": String(size),
             "sortField": "createdAt",
@@ -198,9 +206,8 @@ class OrderService {
         if let status = status {
             queryParams["filter[status]"] = status.rawValue
         }
-        if let customerId = customerId {
-            queryParams["filter[customerId]"] = customerId
-        }
+        
+        print("Loading orders with params: \(queryParams)")
         
         makeRequest(
             endpoint: "/orders",
@@ -211,11 +218,14 @@ class OrderService {
                 do {
                     if let jsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
                         let orders = parseOrdersFromAPI(jsonObject)
+                        print("Successfully parsed \(orders.count) orders")
                         completion(.success(orders))
                     } else if let ordersArray = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] {
                         let orders = ordersArray.map { Order(from: $0) }
+                        print("Successfully parsed \(orders.count) orders from array")
                         completion(.success(orders))
                     } else {
+                        print("Invalid orders format in response")
                         completion(.failure(APIError(message: "Invalid orders format", code: "INVALID_FORMAT", details: nil)))
                     }
                 } catch {
@@ -223,121 +233,7 @@ class OrderService {
                     completion(.failure(APIError(message: "Failed to parse orders", code: "PARSE_ERROR", details: error.localizedDescription)))
                 }
             case .failure(let error):
-                completion(.failure(error))
-            }
-        }
-    }
-    
-    func getOrder(id: String, completion: @escaping (Result<Order, Error>) -> Void) {
-        makeRequest(endpoint: "/orders/\(id)") { result in
-            switch result {
-            case .success(let data):
-                do {
-                    if let jsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
-                        let order = Order(from: jsonObject)
-                        completion(.success(order))
-                    } else {
-                        completion(.failure(APIError(message: "Invalid order format", code: "INVALID_FORMAT", details: nil)))
-                    }
-                } catch {
-                    print("JSON parsing error: \(error)")
-                    completion(.failure(APIError(message: "Failed to parse order", code: "PARSE_ERROR", details: error.localizedDescription)))
-                }
-            case .failure(let error):
-                completion(.failure(error))
-            }
-        }
-    }
-    
-    func updateOrder(
-        order: Order,
-        completion: @escaping (Result<Order, Error>) -> Void
-    ) {
-        let requestBody = order.toUpdateOrderRequest()
-        
-        makeRequest(
-            endpoint: "/orders/\(order.id)",
-            method: "PUT",
-            body: requestBody
-        ) { result in
-            switch result {
-            case .success(let data):
-                do {
-                    if let jsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
-                        let updatedOrder = Order(from: jsonObject)
-                        completion(.success(updatedOrder))
-                    } else {
-                        completion(.failure(APIError(message: "Invalid order format", code: "INVALID_FORMAT", details: nil)))
-                    }
-                } catch {
-                    print("JSON parsing error: \(error)")
-                    completion(.failure(APIError(message: "Failed to parse updated order", code: "PARSE_ERROR", details: error.localizedDescription)))
-                }
-            case .failure(let error):
-                completion(.failure(error))
-            }
-        }
-    }
-    
-    func updateOrderStatus(
-        orderId: String,
-        newStatus: OrderStatus,
-        completion: @escaping (Result<Order, Error>) -> Void
-    ) {
-        let requestBody = ["status": newStatus.rawValue]
-        
-        makeRequest(
-            endpoint: "/orders/\(orderId)",
-            method: "PATCH",
-            body: requestBody
-        ) { result in
-            switch result {
-            case .success(let data):
-                do {
-                    if let jsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
-                        let updatedOrder = Order(from: jsonObject)
-                        completion(.success(updatedOrder))
-                    } else {
-                        completion(.failure(APIError(message: "Invalid order format", code: "INVALID_FORMAT", details: nil)))
-                    }
-                } catch {
-                    print("JSON parsing error: \(error)")
-                    completion(.failure(APIError(message: "Failed to parse updated order", code: "PARSE_ERROR", details: error.localizedDescription)))
-                }
-            case .failure(let error):
-                completion(.failure(error))
-            }
-        }
-    }
-    
-    func deleteOrder(id: String, completion: @escaping (Result<Void, Error>) -> Void) {
-        makeRequest(endpoint: "/orders/\(id)", method: "DELETE") { result in
-            switch result {
-            case .success:
-                completion(.success(()))
-            case .failure(let error):
-                completion(.failure(error))
-            }
-        }
-    }
-    
-    func getOrderStatus(id: String, completion: @escaping (Result<OrderStatus, Error>) -> Void) {
-        makeRequest(endpoint: "/orders/\(id)/status") { result in
-            switch result {
-            case .success(let data):
-                do {
-                    if let jsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-                       let statusString = jsonObject["status"] as? String {
-                        let orderStatus = OrderStatus(rawValue: statusString) ?? .pending
-                        completion(.success(orderStatus))
-                    } else {
-                        completion(.failure(APIError(message: "Invalid status format", code: "INVALID_FORMAT", details: nil)))
-                    }
-                } catch {
-                    print("JSON parsing error: \(error)")
-                    completion(.failure(APIError(message: "Failed to parse status", code: "PARSE_ERROR", details: error.localizedDescription)))
-                }
-            case .failure(let error):
+                print("Failed to load orders: \(error)")
                 completion(.failure(error))
             }
         }

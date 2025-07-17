@@ -2,6 +2,7 @@ import SwiftUI
 
 struct LikedView: View {
     @Binding var likedProducts: [Product]
+    @EnvironmentObject var appController: AppController
     
     var body: some View {
         VStack(spacing: 0) {
@@ -29,7 +30,12 @@ struct LikedView: View {
                         GridItem(.flexible(), spacing: 8)
                     ], spacing: 16) {
                         ForEach(likedProducts) { product in
-                            NavigationLink(destination: ProductDetailView(product: product, cartItems: .constant([]), likedProducts: $likedProducts)) {
+                            NavigationLink(destination: ProductDetailView(
+                                productId: product.id,
+                                fallbackProduct: product,
+                                cartItems: .constant([]),
+                                likedProducts: $likedProducts
+                            ).environmentObject(appController)) {
                                 LikedProductCardView(product: product, likedProducts: $likedProducts)
                             }
                             .buttonStyle(PlainButtonStyle())
@@ -140,4 +146,3 @@ struct LikedProductCardView: View {
         }
     }
 }
-

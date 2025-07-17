@@ -6,15 +6,27 @@ class AppController: ObservableObject {
     @Published var catalogController = CatalogController()
     @Published var orderController = OrderController()
     @Published var productController = ProductController()
+    @Published var categoryController = CategoryController()
     @Published var cartItems: [ProductItem] = []
     @Published var likedProducts: [Product] = []
     @AppStorage("userEmail") private var userEmail = "user@gmail.com"
+    @AppStorage("customerId") private var customerId = ""
     
     private var cancellables = Set<AnyCancellable>()
     
     init() {
+        setupCustomerId()
         setupBindings()
         loadInitialData()
+    }
+    
+    private func setupCustomerId() {
+        if customerId.isEmpty {
+            customerId = UUID().uuidString
+            print("Generated new customer ID: \(customerId)")
+        } else {
+            print("Using existing customer ID: \(customerId)")
+        }
     }
     
     private func setupBindings() {
@@ -24,10 +36,28 @@ class AppController: ObservableObject {
             }
         }
         .store(in: &cancellables)
+        
+        orderController.$orderCreated
+            .sink { [weak self] orderCreated in
+                if orderCreated {
+                    DispatchQueue.main.async {
+                        self?.clearCart()
+                    }
+                }
+            }
+            .store(in: &cancellables)
+        
+        categoryController.objectWillChange.sink { [weak self] _ in
+            DispatchQueue.main.async {
+                self?.objectWillChange.send()
+            }
+        }
+        .store(in: &cancellables)
     }
     
     func loadInitialData() {
         catalogController.loadProducts(refresh: true)
+        categoryController.loadCategories()
     }
     
     func addToCart(_ product: Product, quantity: Int = 1) {
@@ -77,14 +107,23 @@ class AppController: ObservableObject {
     }
     
     func createOrder() {
-        guard !cartItems.isEmpty else { return }
+        guard !cartItems.isEmpty else {
+            orderController.errorMessage = "Cart is empty"
+            orderController.showError = true
+            return
+        }
+        
+        guard !customerId.isEmpty else {
+            orderController.errorMessage = "Customer ID is required"
+            orderController.showError = true
+            return
+        }
         
         AnalyticsManager.shared.logCheckoutStarted(items: cartItems, totalValue: getCartTotal())
         
-        orderController.createOrder(customerId: userEmail, cartItems: cartItems)
+        orderController.createOrder(customerId: customerId, cartItems: cartItems)
         
-        orderController.orderCreated = true
-        clearCart()
+        print("Creating order for customer: \(customerId) with \(cartItems.count) items")
     }
     
     func toggleLiked(_ product: Product) {
@@ -115,5 +154,31 @@ class AppController: ObservableObject {
     
     func refreshData() {
         loadInitialData()
+        categoryController.refreshCategories()
+    }
+    
+    func clearSearch() {
+        catalogController.clearSearch()
+    }
+    
+    func performInstantSearch(_ searchTerm: String, filter: ProductFilter = ProductFilter()) {
+        if searchTerm.isEmpty {
+            catalogController.refreshProducts(filter: filter)
+        } else {
+            catalogController.searchProducts(searchTerm, filter: filter)
+        }
+    }
+    
+    func getCustomerId() -> String {
+        return customerId
+    }
+    
+    func loadOrderHistory() {
+        guard !customerId.isEmpty else {
+            print("Cannot load order history: Customer ID is empty")
+            return
+        }
+        
+        orderController.loadOrders(customerId: customerId)
     }
 }

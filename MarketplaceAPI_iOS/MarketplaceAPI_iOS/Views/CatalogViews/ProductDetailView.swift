@@ -1,86 +1,207 @@
 import SwiftUI
 
 struct ProductDetailView: View {
-    let product: Product
+    let productId: String
+    let fallbackProduct: Product?
     @Binding var cartItems: [ProductItem]
     @Binding var likedProducts: [Product]
     @State private var quantity = 1
     @State private var showingAddedToCart = false
     @State private var showingLikedMessage = false
+    @State private var selectedImageIndex = 0
+    @StateObject private var detailController = ProductDetailController()
+    @StateObject private var reviewController = ReviewController()
+    @EnvironmentObject var appController: AppController
+    
+    private var currentProduct: Product? {
+        return detailController.product ?? fallbackProduct
+    }
     
     private var isLiked: Bool {
-        likedProducts.contains { $0.id == product.id }
+        guard let product = currentProduct else { return false }
+        return appController.isProductLiked(product)
     }
     
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                productImageView
-                
-                productInfoView
-                
-                descriptionView
-                
-                detailsView
-                
-                if !product.tags.isEmpty {
-                    tagsView
-                }
-                
-                Spacer(minLength: 100)
+        Group {
+            if detailController.isLoading && currentProduct == nil {
+                loadingView
+            } else if let product = currentProduct {
+                productDetailContent(product: product)
+            } else {
+                errorView
             }
         }
         .navigationTitle(NSLocalizedString("Product details", comment: ""))
         .navigationBarTitleDisplayMode(.inline)
-        .overlay(alignment: .bottom) {
-            cartControlView
-        }
         .onAppear {
-            AnalyticsManager.shared.logProductView(product)
+            detailController.loadProduct(id: productId)
+            reviewController.loadReviews(for: productId)
+        }
+        .alert("Error", isPresented: $detailController.showError) {
+            Button("Retry") {
+                detailController.refreshProduct(id: productId)
+            }
+            Button("OK") {
+                detailController.showError = false
+            }
+        } message: {
+            Text(detailController.errorMessage)
         }
         .alert("Added to cart", isPresented: $showingAddedToCart) {
             Button("OK") { }
         } message: {
-            Text("\(product.name) has been added to your cart!")
+            if let product = currentProduct {
+                Text("\(product.name) has been added to your cart!")
+            }
         }
         .alert(isLiked ? "Added to liked" : "Removed from liked", isPresented: $showingLikedMessage) {
             Button("OK") { }
         } message: {
-            Text(isLiked ? "\(product.name) has been added to your liked products!" : "\(product.name) has been removed from your liked products!")
+            if let product = currentProduct {
+                Text(isLiked ? "\(product.name) has been added to your liked products!" : "\(product.name) has been removed from your liked products!")
+            }
         }
     }
     
-    private var productImageView: some View {
-        ZStack(alignment: .topTrailing) {
-            ZStack {
-                Rectangle()
-                    .fill(Color(.systemGray6))
-                    .aspectRatio(1, contentMode: .fit)
-                
-                Image(systemName: product.mainImage)
-                    .font(.system(size: 80))
-                    .foregroundColor(.accentColor)
-            }
-            .cornerRadius(16)
+    private var loadingView: some View {
+        VStack(spacing: 20) {
+            ProgressView()
+                .scaleEffect(1.2)
+            Text("Loading product details...")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+    
+    private var errorView: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 60))
+                .foregroundColor(.red)
+            Text("Failed to load product")
+                .font(.title2)
+                .fontWeight(.semibold)
+            Text("Please try again")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
             
-            Button(action: toggleLiked) {
-                Image(systemName: isLiked ? "heart.fill" : "heart")
-                    .font(.system(size: 24))
-                    .foregroundColor(isLiked ? .red : .gray)
-                    .background(
-                        Circle()
-                            .fill(Color(.systemBackground))
-                            .frame(width: 44, height: 44)
-                    )
-                    .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+            Button("Retry") {
+                detailController.refreshProduct(id: productId)
             }
-            .buttonStyle(PlainButtonStyle())
-            .padding(16)
+            .buttonStyle(.borderedProminent)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+    
+    private func productDetailContent(product: Product) -> some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                productImageGallery(product: product)
+                
+                productInfoView(product: product)
+                
+                descriptionView(product: product)
+                
+                detailsView(product: product)
+                
+                if !product.tags.isEmpty {
+                    tagsView(product: product)
+                }
+                
+                Divider()
+                    .padding(.vertical, 8)
+                
+                ReviewsSectionView(product: product)
+                    .padding(.horizontal)
+                
+                Spacer(minLength: 100)
+            }
+        }
+        .overlay(alignment: .bottom) {
+            cartControlView(product: product)
+        }
+        .refreshable {
+            detailController.refreshProduct(id: productId)
+            reviewController.refreshReviews(for: productId)
+        }
+    }
+    
+    private func productImageGallery(product: Product) -> some View {
+        VStack(spacing: 12) {
+            ZStack(alignment: .topTrailing) {
+                ZStack {
+                    Rectangle()
+                        .fill(Color.white)
+                        .frame(height: 300)
+                    
+                    ProductImageView(
+                        imageUrl: product.images.isEmpty ? nil : product.images[selectedImageIndex],
+                        placeholderIcon: product.mainImage,
+                        aspectRatio: 1.0
+                    )
+                    .frame(height: 300)
+                }
+                .cornerRadius(16)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Color(.systemGray5), lineWidth: 1)
+                )
+                
+                Button(action: { toggleLiked(product: product) }) {
+                    Image(systemName: isLiked ? "heart.fill" : "heart")
+                        .font(.system(size: 24))
+                        .foregroundColor(isLiked ? .red : .gray)
+                        .background(
+                            Circle()
+                                .fill(Color(.systemBackground))
+                                .frame(width: 44, height: 44)
+                        )
+                        .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+                }
+                .buttonStyle(PlainButtonStyle())
+                .padding(16)
+            }
+            
+            // Image thumbnails (if multiple images) with white background
+            if product.images.count > 1 {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(Array(product.images.enumerated()), id: \.offset) { index, imageUrl in
+                            ZStack {
+                                Rectangle()
+                                    .fill(Color.white)
+                                    .frame(width: 60, height: 60)
+                                
+                                ProductImageView(
+                                    imageUrl: imageUrl,
+                                    placeholderIcon: product.mainImage,
+                                    aspectRatio: 1.0
+                                )
+                                .frame(width: 60, height: 60)
+                            }
+                            .cornerRadius(8)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(
+                                        selectedImageIndex == index ? Color.accentColor : Color(.systemGray5),
+                                        lineWidth: selectedImageIndex == index ? 2 : 1
+                                    )
+                            )
+                            .onTapGesture {
+                                selectedImageIndex = index
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                }
+            }
         }
         .padding(.horizontal)
     }
     
-    private var productInfoView: some View {
+    private func productInfoView(product: Product) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(product.name)
                 .font(.title2)
@@ -93,12 +214,20 @@ struct ProductDetailView: View {
                 
                 Spacer()
                 
-                HStack(spacing: 4) {
-                    Image(systemName: "star.fill")
-                        .foregroundColor(.yellow)
-                        .font(.system(size: 16))
-                    Text(String(format: "%.1f", product.rating))
-                        .font(.system(size: 16, weight: .medium))
+                if !reviewController.reviews.isEmpty {
+                    StarRatingWithCount(
+                        rating: reviewController.averageRating(),
+                        reviewCount: reviewController.reviews.count,
+                        starSize: 16
+                    )
+                } else {
+                    HStack(spacing: 4) {
+                        Image(systemName: "star.fill")
+                            .foregroundColor(.yellow)
+                            .font(.system(size: 16))
+                        Text(String(format: "%.1f", product.rating))
+                            .font(.system(size: 16, weight: .medium))
+                    }
                 }
             }
             
@@ -119,7 +248,7 @@ struct ProductDetailView: View {
         .padding(.horizontal)
     }
     
-    private var descriptionView: some View {
+    private func descriptionView(product: Product) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Description")
                 .font(.headline)
@@ -131,7 +260,7 @@ struct ProductDetailView: View {
         .padding(.horizontal)
     }
     
-    private var detailsView: some View {
+    private func detailsView(product: Product) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Details")
                 .font(.headline)
@@ -140,12 +269,15 @@ struct ProductDetailView: View {
                 DetailRow(title: String(localized: "Brand"), value: product.brand)
                 DetailRow(title: String(localized: "Color"), value: product.color)
                 DetailRow(title: String(localized: "Category"), value: product.category)
+                if !product.vendorId.isEmpty {
+                    DetailRow(title: String(localized: "Vendor ID"), value: product.vendorId)
+                }
             }
         }
         .padding(.horizontal)
     }
     
-    private var tagsView: some View {
+    private func tagsView(product: Product) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Tags")
                 .font(.headline)
@@ -168,7 +300,7 @@ struct ProductDetailView: View {
         .padding(.leading)
     }
     
-    private var cartControlView: some View {
+    private func cartControlView(product: Product) -> some View {
         VStack(spacing: 12) {
             Divider()
             
@@ -178,7 +310,7 @@ struct ProductDetailView: View {
                 Spacer()
                 
                 HStack(spacing: 12) {
-                    Button(action: toggleLiked) {
+                    Button(action: { toggleLiked(product: product) }) {
                         Image(systemName: isLiked ? "heart.fill" : "heart")
                             .font(.headline)
                             .foregroundColor(isLiked ? .red : .gray)
@@ -189,7 +321,7 @@ struct ProductDetailView: View {
                     }
                     .buttonStyle(PlainButtonStyle())
                     
-                    Button(action: addToCart) {
+                    Button(action: { addToCart(product: product) }) {
                         HStack {
                             Image(systemName: "cart.fill")
                             Text("Add to cart")
@@ -243,36 +375,14 @@ struct ProductDetailView: View {
         quantity += 1
     }
     
-    private func addToCart() {
-        let newItem = ProductItem(
-            productId: product.id,
-            name: product.name,
-            price: product.price,
-            quantity: quantity,
-            image: product.mainImage
-        )
-        
-        if let existingIndex = cartItems.firstIndex(where: { $0.productId == product.id }) {
-            cartItems[existingIndex].quantity += quantity
-        } else {
-            cartItems.append(newItem)
-        }
-        
-        AnalyticsManager.shared.logAddToCart(product, quantity: quantity)
-        
+    private func addToCart(product: Product) {
+        appController.addToCart(product, quantity: quantity)
         showingAddedToCart = true
         quantity = 1
     }
     
-    private func toggleLiked() {
+    private func toggleLiked(product: Product) {
         showingLikedMessage = true
-        
-        if let index = likedProducts.firstIndex(where: { $0.id == product.id }) {
-            likedProducts.remove(at: index)
-        } else {
-            likedProducts.append(product)
-        }
-        
-        AnalyticsManager.shared.logAddToLiked(product)
+        appController.toggleLiked(product)
     }
 }

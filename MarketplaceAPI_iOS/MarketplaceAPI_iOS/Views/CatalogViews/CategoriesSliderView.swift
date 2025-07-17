@@ -4,10 +4,17 @@ struct CategoriesSliderView: View {
     @Binding var showingCategories: Bool
     @Binding var productFilter: ProductFilter
     @State private var tempFilter = ProductFilter()
+    @State private var availableBrands: [String] = []
+    @State private var availableColors: [String] = []
+    @State private var isLoadingBrands = false
+    @State private var isLoadingColors = false
+    @EnvironmentObject var appController: AppController
     
-    let categories = ["All", "Electronics", "Computers", "Accessories", "Smartphones", "Audio"]
-    let brands = ["Apple", "Samsung", "Xiaomi", "Sony", "Microsoft", "Google"]
-    let colors = ["Black", "White", "Silver", "Gold", "Blue", "Red", "Green"]
+    var categories: [String] {
+        return appController.categoryController.categories.isEmpty ?
+            ["All"] :
+            appController.categoryController.categories
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -17,25 +24,71 @@ struct CategoriesSliderView: View {
             
             headerView
             
-            ScrollView {
-                VStack(spacing: 24) {
-                    categoriesSection
-                    priceRangeSection
-                    brandsSection
-                    colorsSection
-                    availabilitySection
-                    sortSection
+            if appController.categoryController.isLoading {
+                loadingView
+            } else {
+                ScrollView {
+                    VStack(spacing: 24) {
+                        categoriesSection
+                        priceRangeSection
+                        brandsSection
+                        colorsSection
+                        availabilitySection
+                        sortSection
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 20)
+                    .padding(.bottom, 20)
                 }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 20)
-                .padding(.bottom, 20)
             }
             
             bottomButtonsView
         }
         .onAppear {
             tempFilter = productFilter
+            loadBrandsAndColors()
         }
+        .alert("Error", isPresented: $appController.categoryController.showError) {
+            Button("OK") {
+                appController.categoryController.showError = false
+            }
+        } message: {
+            Text(appController.categoryController.errorMessage)
+        }
+    }
+    
+    private func loadBrandsAndColors() {
+        isLoadingBrands = true
+        CatalogService.shared.getAvailableBrands { result in
+            DispatchQueue.main.async {
+                isLoadingBrands = false
+                if case .success(let brands) = result {
+                    availableBrands = brands
+                }
+            }
+        }
+        
+        isLoadingColors = true
+        CatalogService.shared.getAvailableColors { result in
+            DispatchQueue.main.async {
+                isLoadingColors = false
+                if case .success(let colors) = result {
+                    availableColors = colors
+                }
+            }
+        }
+    }
+    
+    private var loadingView: some View {
+        VStack(spacing: 20) {
+            ProgressView()
+                .scaleEffect(1.2)
+            Text("Loading categories...")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.top, 50)
     }
     
     private var headerView: some View {
@@ -52,6 +105,20 @@ struct CategoriesSliderView: View {
                     .fontWeight(.semibold)
                 
                 Spacer()
+                
+                if appController.categoryController.isLoading {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                } else {
+                    Button(action: {
+                        appController.categoryController.refreshCategories()
+                        loadBrandsAndColors()
+                    }) {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.title3)
+                            .foregroundColor(.accentColor)
+                    }
+                }
             }
             .padding(.horizontal, 20)
             .padding(.top, 20)
@@ -113,15 +180,28 @@ struct CategoriesSliderView: View {
                     .fontWeight(.semibold)
                 
                 Spacer()
+                
+                if isLoadingBrands {
+                    ProgressView()
+                        .scaleEffect(0.7)
+                }
             }
             
-            VStack(spacing: 12) {
-                ForEach(brands, id: \.self) { brand in
-                    FilterButton(
-                        title: brand,
-                        isSelected: tempFilter.selectedBrands.contains(brand),
-                        action: { toggleBrand(brand) }
-                    )
+            if availableBrands.isEmpty && !isLoadingBrands {
+                Text("No brands available")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, 20)
+            } else {
+                VStack(spacing: 12) {
+                    ForEach(availableBrands, id: \.self) { brand in
+                        FilterButton(
+                            title: brand,
+                            isSelected: tempFilter.selectedBrands.contains(brand),
+                            action: { toggleBrand(brand) }
+                        )
+                    }
                 }
             }
         }
@@ -143,15 +223,28 @@ struct CategoriesSliderView: View {
                     .fontWeight(.semibold)
                 
                 Spacer()
+                
+                if isLoadingColors {
+                    ProgressView()
+                        .scaleEffect(0.7)
+                }
             }
             
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 12) {
-                ForEach(colors, id: \.self) { color in
-                    ColorButton(
-                        color: color,
-                        isSelected: tempFilter.selectedColors.contains(color),
-                        action: { toggleColor(color) }
-                    )
+            if availableColors.isEmpty && !isLoadingColors {
+                Text("No colors available")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, 20)
+            } else {
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 12) {
+                    ForEach(availableColors, id: \.self) { color in
+                        ColorButton(
+                            color: color,
+                            isSelected: tempFilter.selectedColors.contains(color),
+                            action: { toggleColor(color) }
+                        )
+                    }
                 }
             }
         }
@@ -318,10 +411,24 @@ struct CategoriesSliderView: View {
     }
     
     private func toggleCategory(_ category: String) {
-        if tempFilter.selectedCategories.contains(category) {
-            tempFilter.selectedCategories.remove(category)
+        if category == "All" {
+            if tempFilter.selectedCategories.contains("All") {
+                tempFilter.selectedCategories.removeAll()
+            } else {
+                tempFilter.selectedCategories = ["All"]
+            }
         } else {
-            tempFilter.selectedCategories.insert(category)
+            tempFilter.selectedCategories.remove("All")
+            
+            if tempFilter.selectedCategories.contains(category) {
+                tempFilter.selectedCategories.remove(category)
+            } else {
+                tempFilter.selectedCategories.insert(category)
+            }
+            
+            if tempFilter.selectedCategories.isEmpty {
+                tempFilter.selectedCategories.insert("All")
+            }
         }
     }
     
