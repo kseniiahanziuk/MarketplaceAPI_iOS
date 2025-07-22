@@ -83,7 +83,7 @@ struct ProductDetailView: View {
             Text("Failed to load product")
                 .font(.title2)
                 .fontWeight(.semibold)
-            Text("Please try again")
+            Text("Please, try again")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
             

@@ -87,6 +87,12 @@
             "state" : "new",
             "value" : "%1$lld review%2$@"
           }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld відгук%2$@"
+          }
         }
       }
     },
@@ -96,6 +102,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$lld star%2$@"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld зірка"
           }
         }
       }
@@ -154,7 +166,14 @@
       }
     },
     "Add review" : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Додати відгук"
+          }
+        }
+      }
     },
     "Add some products to get started." : {
       "localizations" : {
@@ -207,7 +226,14 @@
       }
     },
     "All orders" : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Всі замовлення"
+          }
+        }
+      }
     },
     "Apply filters" : {
       "localizations" : {
@@ -270,10 +296,24 @@
       }
     },
     "Be the first to review this product!" : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Напишіть перший відгук для цього товару!"
+          }
+        }
+      }
     },
     "Be the first to share your thoughts about this product!" : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Напишіть перші враження від цього товару!"
+          }
+        }
+      }
     },
     "Brand" : {
       "localizations" : {
@@ -346,7 +386,14 @@
       }
     },
     "Clear" : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Очистити"
+          }
+        }
+      }
     },
     "Clear all" : {
       "localizations" : {
@@ -369,7 +416,14 @@
       }
     },
     "Close" : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Закрити"
+          }
+        }
+      }
     },
     "Color" : {
       "localizations" : {
@@ -432,7 +486,14 @@
       }
     },
     "Done" : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Завершено"
+          }
+        }
+      }
     },
     "Edit profile" : {
       "localizations" : {
@@ -485,10 +546,24 @@
       }
     },
     "Estimated delivery" : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Приблизний час доставки"
+          }
+        }
+      }
     },
     "Failed to load product" : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не вдалося завантажити товар"
+          }
+        }
+      }
     },
     "FAQ" : {
       "localizations" : {
@@ -511,7 +586,14 @@
       }
     },
     "Filtered by:" : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відсортовано за:"
+          }
+        }
+      }
     },
     "Filters" : {
       "localizations" : {
@@ -564,7 +646,14 @@
       }
     },
     "How would you rate this product?" : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Як би ви оцінили цей товар?"
+          }
+        }
+      }
     },
     "In stock" : {
       "localizations" : {
@@ -637,19 +726,54 @@
       }
     },
     "Loading active orders..." : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Завантаження активних замовлень…"
+          }
+        }
+      }
     },
     "Loading categories..." : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Завантаження категорій…"
+          }
+        }
+      }
     },
     "Loading more orders..." : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Завантажуємо більше замовлень…"
+          }
+        }
+      }
     },
     "Loading orders..." : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Завантаження замовлень…"
+          }
+        }
+      }
     },
     "Loading product details..." : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Завантаження деталей товару…"
+          }
+        }
+      }
     },
     "Loading products..." : {
       "localizations" : {
@@ -662,10 +786,24 @@
       }
     },
     "Loading reviews..." : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Завантаження відгуків…"
+          }
+        }
+      }
     },
     "Loading..." : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Завантаження…"
+          }
+        }
+      }
     },
     "Logout" : {
       "localizations" : {
@@ -738,10 +876,24 @@
       }
     },
     "Next" : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Наступна"
+          }
+        }
+      }
     },
     "No active orders" : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Немає активних замовлень"
+          }
+        }
+      }
     },
     "No addresses saved" : {
       "localizations" : {
@@ -754,18 +906,21 @@
       }
     },
     "No brands available" : {
-
-    },
-    "No colors available" : {
-
-    },
-    "No orders to track" : {
-      "extractionState" : "stale",
       "localizations" : {
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Немає замовлень для відслідковування"
+            "value" : "Немає доступних брендів"
+          }
+        }
+      }
+    },
+    "No colors available" : {
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Немає доступних кольорів"
           }
         }
       }
@@ -801,7 +956,14 @@
       }
     },
     "No reviews yet" : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Поки немає відгуків"
+          }
+        }
+      }
     },
     "Not available" : {
       "localizations" : {
@@ -834,7 +996,14 @@
       }
     },
     "Order cancelled" : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Замовлення скасовано"
+          }
+        }
+      }
     },
     "Order created" : {
       "localizations" : {
@@ -847,7 +1016,14 @@
       }
     },
     "Order details" : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Деталі замовлення"
+          }
+        }
+      }
     },
     "Order Error" : {
       "localizations" : {
@@ -906,6 +1082,12 @@
             "state" : "new",
             "value" : "Page %1$lld of %2$lld"
           }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сторінка %lld з %lld"
+          }
         }
       }
     },
@@ -920,12 +1102,37 @@
       }
     },
     "Placed %@" : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Розміщено %@"
+          }
+        }
+      }
     },
     "Placed on %@" : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Розміщено на %@"
+          }
+        }
+      }
     },
     "Please try again" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Будь ласка, спробуйте ще раз"
+          }
+        }
+      }
+    },
+    "Please, try again" : {
 
     },
     "Preferences" : {
@@ -939,7 +1146,14 @@
       }
     },
     "Previous" : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Попередня"
+          }
+        }
+      }
     },
     "Price range" : {
       "localizations" : {
@@ -1092,7 +1306,14 @@
       }
     },
     "Retry" : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Спробувати ще раз"
+          }
+        }
+      }
     },
     "Return policy" : {
       "localizations" : {
@@ -1105,13 +1326,34 @@
       }
     },
     "Review" : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відгук"
+          }
+        }
+      }
     },
     "Review submitted" : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відгук розміщено"
+          }
+        }
+      }
     },
     "Reviews" : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відгуки"
+          }
+        }
+      }
     },
     "Save" : {
       "localizations" : {
@@ -1134,10 +1376,24 @@
       }
     },
     "See all" : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Побачити всі"
+          }
+        }
+      }
     },
     "Share your thoughts about this product" : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Поділіться своїми думками про цей товар"
+          }
+        }
+      }
     },
     "Shipping" : {
       "localizations" : {
@@ -1190,7 +1446,14 @@
       }
     },
     "Submit" : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Виставити"
+          }
+        }
+      }
     },
     "Support" : {
       "localizations" : {
@@ -1223,7 +1486,14 @@
       }
     },
     "Thank you for your review!" : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Дякуємо за ваш відгук!"
+          }
+        }
+      }
     },
     "The app needs to restart to fully apply language changes." : {
       "localizations" : {
@@ -1266,7 +1536,14 @@
       }
     },
     "Tracking progress" : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відслідковування прогресу"
+          }
+        }
+      }
     },
     "Try adjusting your search or filters." : {
       "localizations" : {
@@ -1279,7 +1556,14 @@
       }
     },
     "Vendor ID" : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Продавець"
+          }
+        }
+      }
     },
     "Version 1.0.0" : {
       "localizations" : {
@@ -1302,16 +1586,44 @@
       }
     },
     "Write a review" : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Напишіть відгук"
+          }
+        }
+      }
     },
     "Write first review" : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Напишіть перший відгук"
+          }
+        }
+      }
     },
     "Write your review here..." : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Напишіть ваш відгук тут…"
+          }
+        }
+      }
     },
     "You don't have any orders to track right now. Orders with pending, confirmed, or shipped status will appear here." : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "У вас поки немає замовлень для відслідковування. Замовлення зі станами очікування, підтвердження та в процесі доставки зʼявляться тут."
+          }
+        }
+      }
     },
     "Your cart is empty" : {
       "localizations" : {
@@ -1334,7 +1646,14 @@
       }
     },
     "Your name" : {
-
+      "localizations" : {
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ваше імʼя"
+          }
+        }
+      }
     },
     "Your order has been placed successfully!" : {
       "localizations" : {

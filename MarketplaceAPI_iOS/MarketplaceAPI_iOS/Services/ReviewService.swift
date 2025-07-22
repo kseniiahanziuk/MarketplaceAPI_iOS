@@ -94,6 +94,57 @@ class ReviewService {
         }.resume()
     }
     
+    func getReviewsForProduct(
+        productId: String,
+        completion: @escaping (Result<[Review], Error>) -> Void
+    ) {
+        print("Getting reviews for product: \(productId)")
+        
+        makeRequest(endpoint: "/reviews/id/\(productId)") { result in
+            switch result {
+            case .success(let data):
+                do {
+                    if let jsonArray = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] {
+                        let reviews = jsonArray.compactMap { reviewDict -> Review? in
+                            let review = Review(from: reviewDict)
+                            return review.deleted ? nil : review
+                        }
+                        print("Loaded \(reviews.count) reviews from array")
+                        completion(.success(reviews))
+                        
+                    } else if let jsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                        let review = Review(from: jsonObject)
+                        let reviews = review.deleted ? [] : [review]
+                        print("Loaded single review")
+                        completion(.success(reviews))
+                        
+                    } else {
+                        print("No reviews found or invalid format")
+                        completion(.success([]))
+                    }
+                } catch {
+                    print("JSON parsing error: \(error)")
+                    completion(.failure(APIError(
+                        message: "Failed to parse reviews",
+                        code: "PARSE_ERROR",
+                        details: error.localizedDescription
+                    )))
+                }
+                
+            case .failure(let error):
+                print("Failed to get reviews: \(error)")
+                if let apiError = error as? APIError,
+                   apiError.code == "HTTP_ERROR",
+                   apiError.message.contains("404") {
+                    print("No reviews found for product \(productId)")
+                    completion(.success([]))
+                } else {
+                    completion(.failure(error))
+                }
+            }
+        }
+    }
+    
     func createReview(
         productId: String,
         reviewText: String,
@@ -135,47 +186,6 @@ class ReviewService {
             case .failure(let error):
                 print("Review creation failed: \(error)")
                 completion(.failure(error))
-            }
-        }
-    }
-    
-    func getReviewsForProduct(
-        productId: String,
-        completion: @escaping (Result<[Review], Error>) -> Void
-    ) {
-        print("Getting reviews for product: \(productId)")
-        
-        makeRequest(endpoint: "/reviews/id/\(productId)") { result in
-            switch result {
-            case .success(let data):
-                do {
-                    if let jsonArray = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] {
-                        let reviews = jsonArray.compactMap { reviewDict -> Review? in
-                            let review = Review(from: reviewDict)
-                            return review.deleted ? nil : review
-                        }
-                        print("Loaded \(reviews.count) reviews")
-                        completion(.success(reviews))
-                    } else if let jsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
-                        let review = Review(from: jsonObject)
-                        let reviews = review.deleted ? [] : [review]
-                        print("Loaded single review")
-                        completion(.success(reviews))
-                    } else {
-                        print("Invalid reviews format in response")
-                        completion(.success([]))
-                    }
-                } catch {
-                    print("JSON parsing error: \(error)")
-                    completion(.failure(APIError(message: "Failed to parse reviews", code: "PARSE_ERROR", details: error.localizedDescription)))
-                }
-            case .failure(let error):
-                print("Failed to get reviews: \(error)")
-                if let apiError = error as? APIError, apiError.code == "HTTP_ERROR" {
-                    completion(.success([]))
-                } else {
-                    completion(.failure(error))
-                }
             }
         }
     }
